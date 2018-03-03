@@ -50,7 +50,7 @@ public abstract class AbstractPolicyTestCase extends AbstractSamplePoliciesTestC
 	        mustache.execute(new FileWriter(getClass().getResource("/").getFile() + POLICY_NAME + ".xml"), parameters).flush();
 	        
 		} catch (IOException e) {
-			logger.error("Error preparing test: " + e);
+			//logger.error("Error preparing test: " + e);
 			e.printStackTrace();
 		} 
     }       

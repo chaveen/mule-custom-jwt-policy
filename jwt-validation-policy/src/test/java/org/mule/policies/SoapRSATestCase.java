@@ -24,6 +24,7 @@ public class SoapRSATestCase extends AbstractPolicyTestCase
 	private static final String API_FILE = "soap-api/api.xml";
 	private static final String AUTO_DISCOVERY_FILE = "soap-api/auto_discovery_api.xml";
 	private String SOAP_REQUEST;
+
 	
 	protected static final String SOAP_REQUEST_FILE = TEST_RESOURCES + "admission_request.xml";
 	
@@ -48,7 +49,7 @@ public class SoapRSATestCase extends AbstractPolicyTestCase
     	try {
 			SOAP_REQUEST = FileUtils.readFileToString(new File(SOAP_REQUEST_FILE));
 		} catch (IOException e) {
-			logger.error("Error reading SOAP request XML: " + e);
+			//logger.error("Error reading SOAP request XML: " + e);
 			e.printStackTrace();
 		}
 		    	

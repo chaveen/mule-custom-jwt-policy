@@ -1,5 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
 <policy  id="{{ policyId }}" policyName="jwt-policy"
-	xmlns="http://www.mulesoft.org/schema/mule/policy" xmlns:mule="http://www.mulesoft.org/schema/mule/core" 
+	xmlns="http://www.mulesoft.org/schema/mule/policy" 
+	xmlns:mule="http://www.mulesoft.org/schema/mule/core" 
 	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
     xmlns:mulexml="http://www.mulesoft.org/schema/mule/xml"	
 	xmlns:tracking="http://www.mulesoft.org/schema/mule/ee/tracking" 
@@ -15,7 +17,7 @@
 						http://www.mulesoft.org/schema/mule/json http://www.mulesoft.org/schema/mule/json/current/mule-json.xsd
 						http://www.mulesoft.org/schema/mule/encryption http://www.mulesoft.org/schema/mule/encryption/current/mule-encryption.xsd						
 						http://www.mulesoft.org/schema/mule/ee/tracking http://www.mulesoft.org/schema/mule/ee/tracking/current/mule-tracking-ee.xsd">
-							
+	
 	<!-- Response message in case of rejecting a message -->
 	<mule:processor-chain xmlns:mule="http://www.mulesoft.org/schema/mule/core" name="policyViolation">
 		<mule:logger message="Policy {{ policyId }} filtered the message #[message.getId()] based on JWT validation" level="DEBUG" />	  
@@ -213,8 +215,18 @@
 	<mule:remove-variable variableName="audienceMatch"/>
   </before>
   
+{{#pointcutData.length}}
+  {{#pointcutData}}
+    <pointcut>
+      <api-platform-gw:api-pointcut apiName="{{apiName}}" apiVersion="{{apiVersionName}}"/>
+      <resource methodRegex="{{methodRegex}}" uriTemplateRegex="{{uriTemplateRegex}}"/>
+    </pointcut>
+  {{/pointcutData}}
+{{/pointcutData.length}}
+{{^pointcutData.length}}
   <pointcut>
-    <api-platform-gw:api-pointcut xmlns:api-platform-gw="http://www.mulesoft.org/schema/mule/api-platform-gw" apiName="{{ apiName }}" apiVersion="{{ apiVersionName }}"/>
+    <api-platform-gw:api-pointcut apiName="{{apiName}}" apiVersion="{{apiVersionName}}"/>
   </pointcut>
+{{/pointcutData.length}}
    
 </policy>

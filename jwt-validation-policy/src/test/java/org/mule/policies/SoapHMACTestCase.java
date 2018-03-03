@@ -45,7 +45,7 @@ public class SoapHMACTestCase extends AbstractPolicyTestCase
     	try {
 			SOAP_REQUEST = FileUtils.readFileToString(new File(SOAP_REQUEST_FILE));
 		} catch (IOException e) {
-			logger.error("Error reading SOAP request XML: " + e);
+			//logger.error("Error reading SOAP request XML: " + e);
 			e.printStackTrace();
 		}
 		    	

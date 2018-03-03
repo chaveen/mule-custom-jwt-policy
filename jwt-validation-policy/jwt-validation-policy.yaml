@@ -26,5 +26,6 @@ providedCharacteristics:
   - "JWT validation"
 requiredCharacteristics: []
 requiresConnectivity: false
+resourceLevelSupported: true
 standalone: true
 type: custom
