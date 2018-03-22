@@ -2,23 +2,40 @@
 category: Security
 configuration: 
   - 
-    description: "Specifies a secret/public key for JWT encryption."
-    name: "Secret"
-    propertyName: secret
-    sensitive: true
+    description: "Specifies the URL to obtain keys for JWT signature verification."
+    name: "keys_host"
+    propertyName: keys_host
+    sensitive: false
     type: string
+    defaultValue: login.microsoftonline.com
+  - 
+    description: "Specifies the URL to obtain keys for JWT signature verification."
+    name: "keys_base_path"
+    propertyName: keys_base_path
+    sensitive: false
+    type: string
+    defaultValue: common/discovery/keys
+  - 
+    description: "Specifies the URL to obtain keys for JWT signature verification."
+    name: "keys_port"
+    propertyName: keys_port
+    sensitive: false
+    type: string
+    defaultValue: 80
   - 
     description: "Specifies the requested audience of JWT."
     name: "Audience"
     propertyName: audience
     sensitive: false
     type: string
+    defaultValue: https://graph.windows.net
   - 
     description: "Specifies the issuer of JWT."
     name: "Issuer"
     propertyName: issuer
     sensitive: false
     type: string
+    defaultValue: 
 description: "Validates JWT stored in header."
 id: jwt-policy
 name: "JWT policy"

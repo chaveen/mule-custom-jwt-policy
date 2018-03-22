@@ -70,22 +70,27 @@ http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/
     
     <flow name="jwt-validation-policy-as-flowFlow">
         <http:listener config-ref="HTTP_Listener_Configuration" path="/" doc:name="HTTP"/>
+        <!--   <before>   -->
         <logger xmlns:mule="http://www.mulesoft.org/schema/mule/core" level="DEBUG" message="Policy {{ policyId }} applied JWT check." doc:name="Debug Logger"/>
     <message-filter xmlns:mule="http://www.mulesoft.org/schema/mule/core" onUnaccepted="authorizationHeaderViolation" doc:name="Does Authorization Header Exists?">
       <expression-filter xmlns:mule="http://www.mulesoft.org/schema/mule/core" expression="#[message.inboundProperties['Authorization'] != null]" name="AuthorizationHeaderFilter"/>
     </message-filter>
-    <logger xmlns:mule="http://www.mulesoft.org/schema/mule/core" message="Policy {{ policyId }} applying 'message.inboundProperties['Authorization'].startsWith('Bearer ')' filter" level="DEBUG" doc:name="Debug Logger"/>
+    
     <!-- continue only if the Authorization header value has a valid format -->
+    <logger xmlns:mule="http://www.mulesoft.org/schema/mule/core" message="Policy {{ policyId }} applying 'message.inboundProperties['Authorization'].startsWith('Bearer ')' filter" level="DEBUG" doc:name="Debug Logger"/>
     <message-filter xmlns:mule="http://www.mulesoft.org/schema/mule/core" onUnaccepted="authFormatViolation" doc:name="Does Authorization Header contain Bearer?">
       <expression-filter xmlns:mule="http://www.mulesoft.org/schema/mule/core" expression="#[message.inboundProperties['Authorization'].startsWith('Bearer ')]" name="AuthorizationHeaderFormatFilter"/>
     </message-filter>
-        <set-variable variableName="payloadBck" value="#[payload]" doc:name="Save payload"/>
-        <set-payload value="#[message.inboundProperties['Authorization'].substring(message.inboundProperties['Authorization'].indexOf(' ') + 1)]" doc:name="Set JWT as payload"></set-payload>
+    
+    <set-variable variableName="payloadBck" value="#[payload]" doc:name="Save payload"/>
+    <set-payload value="#[message.inboundProperties['Authorization'].substring(message.inboundProperties['Authorization'].indexOf(' ') + 1)]" doc:name="Set JWT as payload"></set-payload>
     <set-variable xmlns:mule="http://www.mulesoft.org/schema/mule/core" variableName="jwtParts" value="#[payload.split('\\.')]" doc:name="Split JWT into three"/>
+   
     <logger xmlns:mule="http://www.mulesoft.org/schema/mule/core" message="Policy {{ policyId }} applying 'flowVars['jwtParts'].length == 3' filter" level="DEBUG" doc:name="Debug Logger"/>
     <message-filter xmlns:mule="http://www.mulesoft.org/schema/mule/core" onUnaccepted="authFormatViolation" doc:name="Does JWT contain three parts?">
       <expression-filter xmlns:mule="http://www.mulesoft.org/schema/mule/core" expression="#[flowVars['jwtParts'].length == 3]" name="JWTFormatFilter"/>
     </message-filter>
+    
     <set-payload xmlns:mule="http://www.mulesoft.org/schema/mule/core" value="#[flowVars['jwtParts'][0]]" doc:name="TakeJWT Header"/>
     <expression-transformer xmlns:mule="http://www.mulesoft.org/schema/mule/core" expression="#[var decoder = new org.apache.commons.codec.binary.Base64(true); var decodedBytes = decoder.decode(payload); var result = new String(decodedBytes); return result;]" doc:name="Decode from Base64"/>
     <json:json-to-object-transformer xmlns:json="http://www.mulesoft.org/schema/mule/json" returnClass="java.util.HashMap" doc:name="JSON to Object"/>
@@ -102,6 +107,8 @@ http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/
     <message-filter xmlns:mule="http://www.mulesoft.org/schema/mule/core" onUnaccepted="policyViolation" doc:name="Check Issuer">
         <expression-filter xmlns:mule="http://www.mulesoft.org/schema/mule/core" expression="#[flowVars.jwtPayload.iss == 'https://sts.windows.net/b989f104-d41b-4f40-b814-1a3bfee7dbc7/']" name="IssuerFilter"/>
     </message-filter>
+    
+        <!-- if there is a list of audiences we iterate -->
         <expression-component doc:name="Check Audience"><![CDATA[	
 		flowVars['audienceMatch'] = false;		
 		
@@ -273,6 +280,7 @@ http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/
 					}
 					]]></scripting:script>
         </scripting:transformer>
+        
         <!-- sometimes JWT is generated with ending '=' -->
         <expression-component doc:name="Expression"><![CDATA[		
 				if (!flowVars['jwtParts'][2].equals(flowVars.signature)){					
@@ -287,10 +295,10 @@ http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/
 						flowVars.signature = jwtSign;
 					}
 				}]]></expression-component>
+				
         <set-variable value="#[flowVars['signature'].equals(flowVars['jwtParts'][2])]" variableName="isValidSignature" doc:name="Set isValidSignature flowvar"/>
       </otherwise>
     </choice>
-    <!-- if there is a list of audiences we iterate -->
     <message-filter xmlns:mule="http://www.mulesoft.org/schema/mule/core" onUnaccepted="signatureViolation" doc:name="Check Signature">
         <expression-filter xmlns:mule="http://www.mulesoft.org/schema/mule/core" expression="#[flowVars.isValidSignature]" name="SignatureFilter"/>
     </message-filter>
