@@ -29,6 +29,7 @@ import org.mule.tck.probe.Probe;
 import org.mule.tck.probe.Prober;
 import org.mule.transport.http.PatchMethod;
 import org.mule.util.FileUtils;
+import java.util.Scanner;
 
 import com.google.common.collect.Lists;
 import com.mulesoft.anypoint.tests.AbstractMultipleFakeMuleServersTestCase;
@@ -37,6 +38,7 @@ import com.mulesoft.module.endpoint.EndpointAliasesCoreExtension;
 import com.mulesoft.module.policies.PoliciesCoreExtension;
 import com.mulesoft.mule.cluster.boot.ClusterCoreExtension;
 import com.mulesoft.mule.plugin.PluginCoreExtension;
+
 
 public abstract class AbstractPolicyAwareMultipleMuleServersTestCase extends AbstractMultipleFakeMuleServersTestCase
 {
@@ -165,18 +167,23 @@ public abstract class AbstractPolicyAwareMultipleMuleServersTestCase extends Abs
             
             prober.check(new Probe()
             {
+                private String reason;
+
                 @Override
                 public boolean isSatisfied()
                 {
                     HttpMethod request = createRequest();
                     try
                     {
+                    	LOGGER.debug("About to execute request from test");
                         httpClient.executeMethod(request);
+                        LOGGER.debug("Got response in test");
                         String responseBodyAsString = request.getResponseBodyAsString();
                         responsePayload = responseBodyAsString;
 
                         if (expectedStatus > 0 && request.getStatusCode() != expectedStatus)
                         {
+                        	reason =  "expected HTTP status code: " + expectedStatus + " actual : " + request.getStatusCode();
                             return false;
                         }
 
@@ -187,6 +194,8 @@ public abstract class AbstractPolicyAwareMultipleMuleServersTestCase extends Abs
                                 if (request.getResponseHeader(responseHeader) == null ||
                                     !expectedResponseHeaders.get(responseHeader).equals(request.getResponseHeader(responseHeader).getValue()))
                                 {
+                                	reason =  "expected header "+ responseHeader + " value : " + expectedResponseHeaders.get(responseHeader) + "actual : " + request.getResponseHeader(responseHeader).getValue();
+
                                     return false;
                                 }
                             }
@@ -197,6 +206,7 @@ public abstract class AbstractPolicyAwareMultipleMuleServersTestCase extends Abs
                             {
                                 if (request.getResponseHeader(responseHeader) == null)
                                 {
+                                	reason =  "expected header: " + responseHeader + "is : " + "null";
                                     return false;
                                 }
                             }
@@ -207,7 +217,8 @@ public abstract class AbstractPolicyAwareMultipleMuleServersTestCase extends Abs
                             for (String responseHeader : unexpectedResponseHeaders)
                             {
                                 if (request.getResponseHeader(responseHeader) != null)
-                                {                                	
+                                {
+                                	reason =  "unexpected response headers: " + request.getResponseHeader(responseHeader);
                                     return false;
                                 }
                             }
@@ -225,7 +236,7 @@ public abstract class AbstractPolicyAwareMultipleMuleServersTestCase extends Abs
                 @Override
                 public String describeFailure()
                 {
-                    return "Invalid result";
+                    return "Invalid result, " + reason;
                 }
             });
                         
@@ -343,6 +354,23 @@ public abstract class AbstractPolicyAwareMultipleMuleServersTestCase extends Abs
     protected void addPolicy(FakeMuleServer muleServer, String policyName)
     {
         File policy = getFileFromPolicies(policyName);
+		
+        if(LOGGER.isDebugEnabled())
+        {
+        LOGGER.debug("Adding policy:");
+
+			Scanner input;
+			try {
+				input = new Scanner(policy);
+				while (input.hasNextLine())
+				{
+					LOGGER.debug(input.nextLine());
+				}
+			} catch (FileNotFoundException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+        }
         copyPolicyToDirectory(muleServer, policy);
     }
 
@@ -395,6 +423,7 @@ public abstract class AbstractPolicyAwareMultipleMuleServersTestCase extends Abs
         try
         {
             org.apache.commons.io.FileUtils.copyFileToDirectory(policy, muleServer.getPoliciesDir());
+            LOGGER.debug("Policy directory : " + muleServer.getPoliciesDir());
         }
         catch (IOException ioe)
         {

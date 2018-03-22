@@ -23,7 +23,7 @@ public class HttpHMACTestCase extends AbstractPolicyTestCase {
     
     @Before
     public void compilePolicy() {
-    	endpointURI = "http://localhost:" + proxyPort.getNumber();
+    	endpointURI = "http://localhost:" + proxyPort.getNumber() + "/api";
     	
     	parameters.put("policyId", "1");
         parameters.put("apiName", "http-test");

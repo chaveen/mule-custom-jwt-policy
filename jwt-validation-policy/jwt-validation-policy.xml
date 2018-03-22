@@ -9,6 +9,13 @@
 	xmlns:encryption="http://www.mulesoft.org/schema/mule/encryption" 
 	xmlns:json="http://www.mulesoft.org/schema/mule/json"
 	xmlns:api-platform-gw="http://www.mulesoft.org/schema/mule/api-platform-gw"	
+	xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns:dw="http://www.mulesoft.org/schema/mule/ee/dw"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xmlns:metadata="http://www.mulesoft.org/schema/mule/metadata" 
+	xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns:spring="http://www.springframework.org/schema/beans" 
+
 	xsi:schemaLocation="http://www.mulesoft.org/schema/mule/policy http://www.mulesoft.org/schema/mule/policy/current/mule-policy.xsd 
 						http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd					
 						http://www.mulesoft.org/schema/mule/xml http://www.mulesoft.org/schema/mule/xml/current/mule-xml.xsd	
@@ -16,7 +23,10 @@
 						http://www.mulesoft.org/schema/mule/api-platform-gw http://www.mulesoft.org/schema/mule/api-platform-gw/current/mule-api-platform-gw.xsd	
 						http://www.mulesoft.org/schema/mule/json http://www.mulesoft.org/schema/mule/json/current/mule-json.xsd
 						http://www.mulesoft.org/schema/mule/encryption http://www.mulesoft.org/schema/mule/encryption/current/mule-encryption.xsd						
-						http://www.mulesoft.org/schema/mule/ee/tracking http://www.mulesoft.org/schema/mule/ee/tracking/current/mule-tracking-ee.xsd">
+						http://www.mulesoft.org/schema/mule/ee/tracking http://www.mulesoft.org/schema/mule/ee/tracking/current/mule-tracking-ee.xsd
+						http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+						http://www.mulesoft.org/schema/mule/ee/dw http://www.mulesoft.org/schema/mule/ee/dw/current/dw.xsd
+						http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd">
 	
 	<!-- Response message in case of rejecting a message -->
 	<mule:processor-chain xmlns:mule="http://www.mulesoft.org/schema/mule/core" name="policyViolation">
@@ -69,6 +79,22 @@
 	<mule:expression-transformer expression="#[var decoder = new org.apache.commons.codec.binary.Base64(true); var decodedBytes = decoder.decode(payload); var result = new String(decodedBytes); return result;]"></mule:expression-transformer>
 	<json:json-to-object-transformer returnClass="java.util.HashMap" />
 	<mule:set-variable value="#[payload]" variableName="jwtPayload"/>
+		
+		
+    <mule:enricher source="payload" target="flowVars.secret" doc:name="Message Enricher">
+        <mule:processor-chain doc:name="Processor Chain">
+                <ee:cache doc:name="Cache">
+                    <http:request config-ref="HTTP_Request_Configuration" path="/" method="GET" doc:name="HTTP" metadata:id="4f2cee77-2a1d-4d8b-a618-00d27c092225"></http:request>
+                    <dw:transform-message doc:name="Transform Message">
+                        <dw:set-payload><![CDATA[%dw 1.0
+%output application/java
+---
+"qwertyuiopasdfghjklzxcvbnm123456"]]></dw:set-payload>
+                    </dw:transform-message>
+                </ee:cache>
+        </mule:processor-chain>
+    </mule:enricher>		
+		
 			 
 	 <mule:choice>
 		<mule:when expression="(flowVars.jwtHeader.alg == &quot;RS256&quot;) || (flowVars.jwtHeader.alg == &quot;RS384&quot;) || (flowVars.jwtHeader.alg == &quot;RS512&quot;)">
@@ -97,7 +123,7 @@
 			boolean verified = false;
 			
 			try{					
-				byte[] pk = Base64.decodeBase64("{{{ secret }}}");
+				byte[] pk = Base64.decodeBase64(flowVars.secret);
 				X509EncodedKeySpec pubKeySpec = new X509EncodedKeySpec(pk); 
 				KeyFactory keyFactory = KeyFactory.getInstance("RSA");
 				PublicKey publicKey = keyFactory.generatePublic(pubKeySpec);		
@@ -144,7 +170,7 @@
 					}
 					if (algorithm != null){
 						Mac sha256_HMAC = Mac.getInstance(algorithm);
-						SecretKeySpec secret_key = new SecretKeySpec("{{{ secret }}}".getBytes(), algorithm);
+						SecretKeySpec secret_key = new SecretKeySpec(flowVars.secret.getBytes(), algorithm);
 						sha256_HMAC.init(secret_key);
 						
 						byte[] signature = sha256_HMAC.doFinal((flowVars['jwtParts'][0] + '.' + flowVars['jwtParts'][1]).getBytes("US-ASCII"));
@@ -190,9 +216,7 @@
 		}
 		else if (flowVars['jwtPayload'].aud != null){
 			flowVars['audienceMatch'] = flowVars['jwtPayload'].aud.equals("{{{ audience }}}");
-		}		
-		
-		]]>
+		}]]>
 	</mule:expression-component>		
 				
 	<mule:message-filter xmlns:mule="http://www.mulesoft.org/schema/mule/core" onUnaccepted="policyViolation">

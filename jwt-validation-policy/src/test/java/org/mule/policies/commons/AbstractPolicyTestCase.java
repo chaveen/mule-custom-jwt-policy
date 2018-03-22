@@ -17,6 +17,7 @@ import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 
 import org.apache.commons.io.IOUtils;
+import org.apache.log4j.Logger;
 import org.w3c.dom.Document;
 import org.xml.sax.SAXException;
 
@@ -32,6 +33,9 @@ public abstract class AbstractPolicyTestCase extends AbstractSamplePoliciesTestC
 	protected Map<String, Object> parameters = new HashMap<>();
 	protected String endpointURI;
 	protected KeyPair keyPair;
+	
+    private static final Logger LOGGER = Logger.getLogger(AbstractPolicyTestCase.class);
+
     
 	public AbstractPolicyTestCase(String proxyFile, String apiFile, String autoDiscoveryFile)
     {
@@ -40,7 +44,8 @@ public abstract class AbstractPolicyTestCase extends AbstractSamplePoliciesTestC
         keyPair = generateKey();
     }
     
-    protected void compilePolicy() {    	    
+    protected void compilePolicy() {
+		LOGGER.debug("Compiling Policy");
     	try {
     		if (new File(getClass().getResource("/").getFile() + POLICY_NAME + ".xml").exists()){
     			new File(getClass().getResource("/").getFile() + POLICY_NAME + ".xml").delete();	
@@ -50,16 +55,20 @@ public abstract class AbstractPolicyTestCase extends AbstractSamplePoliciesTestC
 	        mustache.execute(new FileWriter(getClass().getResource("/").getFile() + POLICY_NAME + ".xml"), parameters).flush();
 	        
 		} catch (IOException e) {
-			//logger.error("Error preparing test: " + e);
+			LOGGER.error("Error preparing gate: " + e);
 			e.printStackTrace();
 		} 
     }       
        
     protected AssertEndpointResponseBuilder applyPolicyAndTest() throws InterruptedException {		
-		addPolicy(POLICY_NAME + ".xml");		
+    	LOGGER.debug("applying policy:" + POLICY_NAME);
+
+    	addPolicy(POLICY_NAME + ".xml");		
         Thread.sleep(2000);
         try {
 			Document document = createXMLDocument(IOUtils.toString(getClass().getResource("/" + POLICY_NAME + ".xml")));
+
+			
 			assertEquals("PolicyId should be set", parameters.get("policyId"), document.getElementsByTagName("policy").item(0).getAttributes().getNamedItem("id").getTextContent());
 		} catch (ParserConfigurationException | SAXException | IOException e) {
 			e.printStackTrace();
@@ -72,6 +81,7 @@ public abstract class AbstractPolicyTestCase extends AbstractSamplePoliciesTestC
     
     protected void unapplyPolicy(
 			AssertEndpointResponseBuilder assertResponseBuilder) {
+    	LOGGER.debug("unapplying policy:" + POLICY_NAME);
 		removePolicy(POLICY_NAME);        
 	}
 

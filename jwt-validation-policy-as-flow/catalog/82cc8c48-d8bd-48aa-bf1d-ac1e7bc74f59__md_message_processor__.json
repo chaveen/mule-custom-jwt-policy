@@ -1,0 +1,11 @@
+{
+    "inputMessageMetadata": {},
+    "outputMessageMetadata": {
+        "messagePayload": {
+            "connectorName": "#_custom_mule_metadata_type_#",
+            "typeId": "azure_key_matched"
+        }
+    },
+    "id": "82cc8c48-d8bd-48aa-bf1d-ac1e7bc74f59",
+    "version": "5.2.0.0"
+}

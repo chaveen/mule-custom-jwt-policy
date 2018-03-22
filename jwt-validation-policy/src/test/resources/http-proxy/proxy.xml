@@ -14,19 +14,24 @@ http://www.springframework.org/schema/beans http://www.springframework.org/schem
 
     <expression-language:property-placeholder location="http-proxy/config.properties" />
 
-    <api-platform-gw:api id="![p['api.id']]" apiName="![p['api.name']]" version="![p['api.version']]" flowRef="proxy3" doc:name="API Autodiscovery">
+   <!--  test will fail if enabled:
+   This requires API registred in Anypoint platform
+   <api-platform-gw:api id="![p['api.id']]" apiName="![p['api.name']]" version="![p['api.version']]" flowRef="proxy3" doc:name="API Autodiscovery">
     </api-platform-gw:api>
+     -->
 
     <http:request-config
       name="http-request-config"
       host="![p['implementation.host']]"
       port="${api_port}"
       basePath="![p['implementation.path']]" doc:name="HTTP Request Configuration"/>
+      
     <http:listener-config name="HTTP_Listener_Configuration4" host="0.0.0.0" port="${proxy_port}" doc:name="HTTP Listener Configuration"/>
 
     <flow name="proxy3">
         <http:listener config-ref="HTTP_Listener_Configuration4" path="![p['proxy.path']]" parseRequest="false" doc:name="HTTP"/>
         <flow-ref name="copy-headers1" doc:name="Flow Reference"/>
+        <logger message="in inboud proxy flow" level="INFO" doc:name="Logger"/>
         <http:request config-ref="http-request-config" method="#[message.inboundProperties['http.method']]"
                       path="#[message.inboundProperties['http.request.path'].substring(message.inboundProperties['http.listener.path'].length()-2)]" parseResponse="false" doc:name="HTTP">
             <http:request-builder>
@@ -36,6 +41,7 @@ http://www.springframework.org/schema/beans http://www.springframework.org/schem
         </http:request>
 
         <flow-ref name="copy-headers1" doc:name="Flow Reference"/>
+        <logger message="in outbound proxy flow" level="INFO" doc:name="Logger"/>
     </flow>
 
     <sub-flow name="copy-headers1">

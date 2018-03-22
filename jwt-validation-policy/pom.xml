@@ -9,8 +9,8 @@
 	<properties>
 		<junit.version>4.12</junit.version>
 		<mockito.version>1.10.19</mockito.version>
-		<mustache.version>0.9.1</mustache.version>
-		<yamlbeans.version>1.09</yamlbeans.version>
+		<mustache.version>0.9.5</mustache.version>
+		<yamlbeans.version>1.13</yamlbeans.version>
 		<jose4j.version>0.4.4</jose4j.version>
 		<mule.version>3.9.0</mule.version>
 		<munit.version>1.3.5</munit.version>
@@ -64,12 +64,6 @@
 			<artifactId>mule-core-ee</artifactId>
 			<version>${mule.version}</version>
 			<scope>provided</scope>
-		</dependency>
-		<dependency>
-			<groupId>org.mule</groupId>
-			<artifactId>mule-core</artifactId>
-			<version>${mule.version}</version>
-			<scope>test</scope>
 		</dependency>
 		<dependency>
 			<groupId>org.mule.modules</groupId>
@@ -148,6 +142,12 @@
 			<version>${munit.version}</version>
 			<scope>test</scope>
 		</dependency>
+		<dependency>
+			<groupId>org.mule.modules</groupId>
+			<artifactId>mule-module-spring-config</artifactId>
+			<version>${mule.version}</version>
+			<scope>provided</scope>
+		</dependency>
 	</dependencies>
 	<build>
 		<plugins>
@@ -164,8 +164,29 @@
 				<artifactId>munit-maven-plugin</artifactId>
 				<version>${munit.version}</version>
 			</plugin>
+			<plugin>
+				<artifactId>maven-dependency-plugin</artifactId>
+				<version>2.10</version>
+				<executions>
+					<execution>
+						<id>download-sources</id>
+						<goals>
+							<goal>sources</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
 		</plugins>
 	</build>
+	<reporting>
+		<plugins>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-surefire-report-plugin</artifactId>
+				<version>2.21.0</version>
+			</plugin>
+		</plugins>
+	</reporting>
 	<pluginRepositories>
 		<pluginRepository>
 			<id>mulesoft-releases</id>

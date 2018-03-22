@@ -8,7 +8,7 @@ http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/cor
 http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
 http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-current.xsd" version="EE-3.7.0">
 
-    <http:listener-config name="httpConf1" host="localhost" port="${api_port}" doc:name="HTTP Listener Configuration"/>
+    <http:listener-config name="httpConf1" host="0.0.0.0" port="${api_port}" doc:name="HTTP Listener Configuration"/>
 	
     <flow name="flow_1">
         <http:listener config-ref="httpConf1" path="/api" doc:name="HTTP"/>
