@@ -7,28 +7,28 @@ configuration:
     propertyName: keys_host
     sensitive: false
     type: string
-    defaultValue: login.microsoftonline.com
+    defaultValue: "login.microsoftonline.com"
   - 
     description: "Specifies the URL to obtain keys for JWT signature verification."
     name: "keys_base_path"
     propertyName: keys_base_path
     sensitive: false
     type: string
-    defaultValue: common/discovery/keys
+    defaultValue: "common/discovery/keys"
   - 
     description: "Specifies the URL to obtain keys for JWT signature verification."
     name: "keys_port"
     propertyName: keys_port
     sensitive: false
     type: string
-    defaultValue: 80
+    defaultValue: "80"
   - 
     description: "Specifies the requested audience of JWT."
     name: "Audience"
     propertyName: audience
     sensitive: false
     type: string
-    defaultValue: https://graph.windows.net
+    defaultValue: "https://graph.windows.net"
   - 
     description: "Specifies the issuer of JWT."
     name: "Issuer"

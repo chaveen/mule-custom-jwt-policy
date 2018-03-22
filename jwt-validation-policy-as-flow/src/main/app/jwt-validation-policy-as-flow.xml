@@ -71,7 +71,7 @@ http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/
     <flow name="jwt-validation-policy-as-flowFlow">
         <http:listener config-ref="HTTP_Listener_Configuration" path="/" doc:name="HTTP"/>
         <!--   <before>   -->
-        <logger xmlns:mule="http://www.mulesoft.org/schema/mule/core" level="DEBUG" message="Policy {{ policyId }} applied JWT check." doc:name="Debug Logger"/>
+        <logger xmlns:mule="http://www.mulesoft.org/schema/mule/core" level="DEBUG" message="Policy {{ policyId }} executing" doc:name="Debug Logger"/>
     <message-filter xmlns:mule="http://www.mulesoft.org/schema/mule/core" onUnaccepted="authorizationHeaderViolation" doc:name="Does Authorization Header Exists?">
       <expression-filter xmlns:mule="http://www.mulesoft.org/schema/mule/core" expression="#[message.inboundProperties['Authorization'] != null]" name="AuthorizationHeaderFilter"/>
     </message-filter>
@@ -101,9 +101,13 @@ http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/
     <json:json-to-object-transformer xmlns:json="http://www.mulesoft.org/schema/mule/json" returnClass="java.util.HashMap" doc:name="JSON to Object"/>
         <set-variable variableName="jwtPayload" value="#[payload]" doc:name="set JWT Payload flowvar"/>
     
+    
+    <logger xmlns:mule="http://www.mulesoft.org/schema/mule/core" level="DEBUG" message="Policy {{ policyId }} applying JWT expiry check." doc:name="Debug Logger"/>
     <message-filter xmlns:mule="http://www.mulesoft.org/schema/mule/core" onUnaccepted="expiryViolation" doc:name="Check Expiry">
         <expression-filter xmlns:mule="http://www.mulesoft.org/schema/mule/core" expression="#[(flowVars.jwtPayload.exp*1000l) &gt; java.lang.System.currentTimeMillis()]" name="ExpiranceFilter"/>
     </message-filter>
+    
+     <logger xmlns:mule="http://www.mulesoft.org/schema/mule/core" level="DEBUG" message="Policy {{ policyId }} applying JWT Issuer check." doc:name="Debug Logger"/>
     <message-filter xmlns:mule="http://www.mulesoft.org/schema/mule/core" onUnaccepted="policyViolation" doc:name="Check Issuer">
         <expression-filter xmlns:mule="http://www.mulesoft.org/schema/mule/core" expression="#[flowVars.jwtPayload.iss == 'https://sts.windows.net/b989f104-d41b-4f40-b814-1a3bfee7dbc7/']" name="IssuerFilter"/>
     </message-filter>
@@ -126,7 +130,7 @@ http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/
         <expression-filter xmlns:mule="http://www.mulesoft.org/schema/mule/core" expression="#[flowVars.audienceMatch]" name="AudienceFilter"/>
     </message-filter>
          
-    <enricher source="payload" target="flowVars.secret" doc:name="Get Key to check signature">
+    <enricher source="payload" target="flowVars.public_key_or_cert" doc:name="Get Key to check signature">
         <processor-chain doc:name="Processor Chain">
                 <ee:cache doc:name="Cache">
                     <logger message="cache miss" level="DEBUG" doc:name="Logger"/>
@@ -143,7 +147,7 @@ http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/
         </processor-chain>
     </enricher>
     <choice xmlns:mule="http://www.mulesoft.org/schema/mule/core" xmlns:scripting="http://www.mulesoft.org/schema/mule/scripting" doc:name="Choice">
-    <when expression="flowVars.secret.startsWith(&quot;-&quot;)">
+    <when expression="flowVars.public_key_or_cert.startsWith(&quot;-&quot;)">
                 <scripting:transformer doc:name="Check Signature based on RSA Certficate">
                     <scripting:script engine="Groovy"><![CDATA[
 			import org.apache.commons.codec.binary.Base64;
@@ -174,7 +178,7 @@ http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/
 			try{
 				CertificateFactory certFactory = CertificateFactory.getInstance("X.509");
 					
-				X509Certificate publicCertificate = (X509Certificate)certFactory.generateCertificate(new ByteArrayInputStream(flowVars.secret.getBytes()));
+				X509Certificate publicCertificate = (X509Certificate)certFactory.generateCertificate(new ByteArrayInputStream(flowVars.public_key_or_cert.getBytes()));
 			    Signature publicSignature = Signature.getInstance(algorithm);
         		publicSignature.initVerify(publicCertificate);
         		publicSignature.update((flowVars['jwtParts'][0] + '.' + flowVars['jwtParts'][1]).getBytes());
@@ -220,7 +224,7 @@ http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/
 			boolean verified = false;
 			
 			try{					
-				byte[] pk = Base64.decodeBase64(flowVars.secret);
+				byte[] pk = Base64.decodeBase64(flowVars.public_key_or_cert);
 				X509EncodedKeySpec pubKeySpec = new X509EncodedKeySpec(pk); 
 				KeyFactory keyFactory = KeyFactory.getInstance("RSA");
 				PublicKey publicKey = keyFactory.generatePublic(pubKeySpec);		
@@ -268,7 +272,7 @@ http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/
 					}
 					if (algorithm != null){
 						Mac sha256_HMAC = Mac.getInstance(algorithm);
-						SecretKeySpec secret_key = new SecretKeySpec(flowVars.secret.getBytes(), algorithm);
+						SecretKeySpec secret_key = new SecretKeySpec(flowVars.public_key_or_cert.getBytes(), algorithm);
 						sha256_HMAC.init(secret_key);
 						
 						byte[] signature = sha256_HMAC.doFinal((flowVars['jwtParts'][0] + '.' + flowVars['jwtParts'][1]).getBytes("US-ASCII"));
@@ -299,6 +303,8 @@ http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/
         <set-variable value="#[flowVars['signature'].equals(flowVars['jwtParts'][2])]" variableName="isValidSignature" doc:name="Set isValidSignature flowvar"/>
       </otherwise>
     </choice>
+    
+     <mule:logger xmlns:mule="http://www.mulesoft.org/schema/mule/core" level="DEBUG" message="Policy {{ policyId }} applying JWT Signature check." doc:name="Debug Logger"/>
     <message-filter xmlns:mule="http://www.mulesoft.org/schema/mule/core" onUnaccepted="signatureViolation" doc:name="Check Signature">
         <expression-filter xmlns:mule="http://www.mulesoft.org/schema/mule/core" expression="#[flowVars.isValidSignature]" name="SignatureFilter"/>
     </message-filter>
