@@ -36,6 +36,28 @@ configuration:
     sensitive: false
     type: string
     defaultValue: 
+  - 
+    description: "how many keys to cache?"
+    name: "cacheEntries"
+    propertyName: cache_entries
+    sensitive: false
+    type: string
+    defaultValue: "100"
+  - 
+    description: "When should the cache entries expire?"
+    name: "cacheTTL"
+    propertyName: cache_ttl
+    sensitive: false
+    type: string
+    defaultValue: "300000"
+  - 
+    description: "How often should TTL be evaluated?"
+    name: "cacheInterval"
+    propertyName: cache_interval
+    sensitive: false
+    type: string
+    defaultValue: "30000"  
+  
 description: "Validates JWT stored in header."
 id: jwt-policy
 name: "JWT policy"

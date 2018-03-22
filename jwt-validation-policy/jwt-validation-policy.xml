@@ -29,15 +29,10 @@
 						http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd">
 	
 	    <http:request-config name="HTTP_Request_Configuration" host="{{{ keys_host }}}" port="{{{ keys_port }}}" doc:name="HTTP Request Configuration" basePath="{{{ keys_base_path }}}"/>
-	
-	    <!-- Response message in case of rejecting a message -->
-	<processor-chain xmlns="http://www.mulesoft.org/schema/mule/core" name="policyViolation" doc:name="policyViolation">
-		<logger message="Policy {{ policyId }} filtered the message #[message.getId()] based on JWT validation" level="DEBUG" doc:name="Logger"/>	  
-		<set-property propertyName="http.status" value="401" doc:name="Property"/>    
-		<set-property propertyName="Content-Type" value="application/json" doc:name="Property"/>
-		<set-payload value='{ "error" : "JWT is invalid"}' doc:name="Set Payload"/>
-	</processor-chain>
-	
+		<ee:object-store-caching-strategy name="Caching_Strategy" keyGenerationExpression="#[flowVars.jwtHeader.x5t]" doc:name="Caching Strategy">
+        	<mule:in-memory-store name="public_keys_x5t" maxEntries="{{{ cache_entries }}}" entryTTL="{{{ cache_ttl }}}" expirationInterval="{{{ cache_interval }}}"/>
+    	</ee:object-store-caching-strategy>
+	    <!-- Response message in case of rejecting a message -->	
 		<processor-chain xmlns="http://www.mulesoft.org/schema/mule/core" name="audViolation" doc:name="audViolation">
 		<logger message="Policy {{ policyId }} filtered the message #[message.getId()] based on JWT validation" level="DEBUG" doc:name="Logger"/>	  
 		<set-property propertyName="http.status" value="401" doc:name="Property"/>    
@@ -117,7 +112,7 @@
     </mule:message-filter>
     
     <mule:logger xmlns:mule="http://www.mulesoft.org/schema/mule/core" level="DEBUG" message="Policy {{ policyId }} applying JWT Issuer check." doc:name="Debug Logger"/>
-    <mule:message-filter xmlns:mule="http://www.mulesoft.org/schema/mule/core" onUnaccepted="policyViolation" doc:name="Check Issuer">
+    <mule:message-filter xmlns:mule="http://www.mulesoft.org/schema/mule/core" onUnaccepted="issViolation" doc:name="Check Issuer">
         <mule:expression-filter xmlns:mule="http://www.mulesoft.org/schema/mule/core" expression="#[flowVars.jwtPayload.iss == 'https://sts.windows.net/b989f104-d41b-4f40-b814-1a3bfee7dbc7/']" name="IssuerFilter"/>
     </mule:message-filter>	
     
@@ -140,7 +135,7 @@
 		
     <mule:enricher source="payload" target="flowVars.public_key_or_cert" doc:name="Get Key to check signature">
         <mule:processor-chain doc:name="Processor Chain">
-                <ee:cache doc:name="Cache">
+                <ee:cache doc:name="Cache" cachingStrategy-ref="Caching_Strategy">
                     <mule:logger message="cache miss" level="DEBUG" doc:name="Logger"/>
                     <http:request config-ref="HTTP_Request_Configuration" path="/" method="GET" doc:name="HTTP" metadata:id="4f2cee77-2a1d-4d8b-a618-00d27c092225"></http:request>
                     <dw:transform-message doc:name="Transform Message" metadata:id="82cc8c48-d8bd-48aa-bf1d-ac1e7bc74f59">
