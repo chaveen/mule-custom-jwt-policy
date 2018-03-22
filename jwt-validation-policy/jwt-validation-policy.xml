@@ -34,40 +34,42 @@
     	</ee:object-store-caching-strategy>
 	    <!-- Response message in case of rejecting a message -->	
 		<processor-chain xmlns="http://www.mulesoft.org/schema/mule/core" name="audViolation" doc:name="audViolation">
-		<logger message="Policy {{ policyId }} filtered the message #[message.getId()] based on JWT validation" level="DEBUG" doc:name="Logger"/>	  
+		<logger message="Policy {{ policyId }} filtered the message #[message.getId()] based on aud check violoation" level="DEBUG" doc:name="Logger"/>	  
 		<set-property propertyName="http.status" value="401" doc:name="Property"/>    
 		<set-property propertyName="Content-Type" value="application/json" doc:name="Property"/>
 		<set-payload value='{ "error" : "JWT aud is invalid"}' doc:name="Set Payload"/>
 	</processor-chain>
 	
 		<processor-chain xmlns="http://www.mulesoft.org/schema/mule/core" name="issViolation" doc:name="issViolation">
-		<logger message="Policy {{ policyId }} filtered the message #[message.getId()] based on JWT validation" level="DEBUG" doc:name="Logger"/>	  
+		<logger message="Policy {{ policyId }} filtered the message #[message.getId()] based on iss check violation" level="DEBUG" doc:name="Logger"/>	  
 		<set-property propertyName="http.status" value="401" doc:name="Property"/>    
 		<set-property propertyName="Content-Type" value="application/json" doc:name="Property"/>
 		<set-payload value='{ "error" : "JWT iss is invalid"}' doc:name="Set Payload"/>
 	</processor-chain>
 	
 		<processor-chain xmlns="http://www.mulesoft.org/schema/mule/core" name="expiryViolation" doc:name="expiryViolation">
-		<logger message="Policy {{ policyId }} filtered the message #[message.getId()] based on JWT validation" level="DEBUG" doc:name="Logger"/>	  
+		<logger message="Policy {{ policyId }} filtered the message #[message.getId()] based on expiry check violation" level="DEBUG" doc:name="Logger"/>	  
 		<set-property propertyName="http.status" value="401" doc:name="Property"/>    
 		<set-property propertyName="Content-Type" value="application/json" doc:name="Property"/>
 		<set-payload value='{ "error" : "JWT has expired"}' doc:name="Set Payload"/>
 	</processor-chain>
 	
 			<processor-chain xmlns="http://www.mulesoft.org/schema/mule/core" name="signatureViolation" doc:name="signatureViolation">
-		<logger message="Policy {{ policyId }} filtered the message #[message.getId()] based on JWT validation" level="DEBUG" doc:name="Logger"/>	  
+		<logger message="Policy {{ policyId }} filtered the message #[message.getId()] based on signature check violation" level="DEBUG" doc:name="Logger"/>	  
 		<set-property propertyName="http.status" value="401" doc:name="Property"/>    
 		<set-property propertyName="Content-Type" value="application/json" doc:name="Property"/>
 		<set-payload value='{ "error" : "JWT has invalid signature"}' doc:name="Set Payload"/>
 	</processor-chain>
  
 	<processor-chain xmlns="http://www.mulesoft.org/schema/mule/core" name="authorizationHeaderViolation" doc:name="authorizationHeaderViolation">
+	 	<logger message="Policy {{ policyId }} filtered the message #[message.getId()] based on authorization header check violation" level="DEBUG" doc:name="Logger"/>	  
       <set-property propertyName="http.status" value="401" doc:name="Property"/>    
       <set-property propertyName="Content-Type" value="application/json" doc:name="Property"/>
       <set-payload value='{ "error" : " Authorization header not provided"}' doc:name="Set Payload"/>
     </processor-chain>
   	
 	<processor-chain xmlns="http://www.mulesoft.org/schema/mule/core" name="authFormatViolation" doc:name="authFormatViolation">
+	  <logger message="Policy {{ policyId }} filtered the message #[message.getId()] based on authorization header format check violation" level="DEBUG" doc:name="Logger"/>	
 	  <set-property propertyName="http.status" value="401" doc:name="Property"/>    
 	  <set-property propertyName="Content-Type" value="application/json" doc:name="Property"/>
 	  <set-payload value='{ "error" : "Authorization header has invalid format"}' doc:name="Set Payload"/>
