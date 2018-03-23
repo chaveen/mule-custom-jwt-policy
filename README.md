@@ -18,7 +18,8 @@ OAuth 2.0 (JWT)
 - To be applied to a protected resource 
 - Token based on [rfc7519](https://tools.ietf.org/html/rfc7519)
 
-This policy does **not** support opaque bearer (by reference) token.
+This policy does **not** support opaque bearer (by reference) token, as this policy verifies the JWToken based on the signature rather than an introspection/validation endpoint.
+
 ### Cryptography Algorithms
 Policy supports these algorithms for digital signature verification: 
 
