@@ -64,9 +64,9 @@ Use if you want to obtain the secret or public key from a JWKS Service. The foll
 
 Keys will be cached, the following configure are required to configure the cache:
 
-+ *cache_entries*
-+ *cache_ttl*
-+ *cache_interval*
++ *cache_entries* -
++ *cache_ttl* -
++ *cache_interval* -
 
 ### secret or public key
 
@@ -86,5 +86,6 @@ Keys will be cached, the following configure are required to configure the cache
 +  *Issuer* - defines an issuer of JWT token
 +  *Audience* - requested audience of JWT token.
 
+Note: Tests need to be updated and are failing.
 
 

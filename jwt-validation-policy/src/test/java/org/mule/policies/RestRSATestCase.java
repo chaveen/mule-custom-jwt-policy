@@ -81,7 +81,7 @@ public class RestRSATestCase extends AbstractPolicyTestCase
 		assertResponseBuilder.clear()   
         .requestHeader("Authorization", "Bearer " + JWTTokenGenerator.getRSA(AlgorithmIdentifiers.RSA_USING_SHA256, generateKey(), 
         		JWTConstants.ISSUER, JWTConstants.AUDIENCE, false))
-        .setExpectedStatus(403)
+        .setExpectedStatus(401)
         .assertResponse();        
         unapplyPolicy(assertResponseBuilder);                
     }

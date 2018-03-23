@@ -91,7 +91,7 @@ public class RestHMACTestCase extends AbstractPolicyTestCase
 		AssertEndpointResponseBuilder assertResponseBuilder = applyPolicyAndTest();        
         
         assertResponseBuilder.clear()   
-        .setExpectedStatus(403)
+        .setExpectedStatus(401)
         .assertResponse();
 
         unapplyPolicy(assertResponseBuilder);
@@ -106,7 +106,7 @@ public class RestHMACTestCase extends AbstractPolicyTestCase
         assertResponseBuilder.clear()   
         .requestHeader("Authorization", "Basic " + JWTTokenGenerator.getHMAC(AlgorithmIdentifiers.HMAC_SHA256, JWTConstants.HMAC_SECRET, 
         		JWTConstants.ISSUER, JWTConstants.AUDIENCE, false))
-        .setExpectedStatus(403)
+        .setExpectedStatus(401)
         .assertResponse();
 
         unapplyPolicy(assertResponseBuilder);
@@ -121,7 +121,7 @@ public class RestHMACTestCase extends AbstractPolicyTestCase
         assertResponseBuilder.clear()   
         .requestHeader("Authorization", "Bearer " + JWTTokenGenerator.getHMAC(AlgorithmIdentifiers.HMAC_SHA256, JWTConstants.HMAC_SECRET + "1", 
         		JWTConstants.ISSUER, JWTConstants.AUDIENCE, false))
-        .setExpectedStatus(403)
+        .setExpectedStatus(401)
         .assertResponse();
 
         unapplyPolicy(assertResponseBuilder);
@@ -136,7 +136,7 @@ public class RestHMACTestCase extends AbstractPolicyTestCase
         assertResponseBuilder.clear()   
         .requestHeader("Authorization", "Bearer " + JWTTokenGenerator.getHMAC(AlgorithmIdentifiers.HMAC_SHA256, JWTConstants.HMAC_SECRET, 
         		JWTConstants.ISSUER, JWTConstants.AUDIENCE + "1", false))
-        .setExpectedStatus(403)
+        .setExpectedStatus(401)
         .assertResponse();
 
         unapplyPolicy(assertResponseBuilder);
@@ -151,7 +151,7 @@ public class RestHMACTestCase extends AbstractPolicyTestCase
         assertResponseBuilder.clear()   
         .requestHeader("Authorization", "Bearer " + JWTTokenGenerator.getHMAC(AlgorithmIdentifiers.HMAC_SHA256, JWTConstants.HMAC_SECRET, 
         		JWTConstants.ISSUER + "1", JWTConstants.AUDIENCE, false))
-        .setExpectedStatus(403)
+        .setExpectedStatus(401)
         .assertResponse();
 
         unapplyPolicy(assertResponseBuilder);
@@ -166,7 +166,7 @@ public class RestHMACTestCase extends AbstractPolicyTestCase
         assertResponseBuilder.clear()   
         .requestHeader("Authorization", "Bearer " + JWTTokenGenerator.getHMAC(AlgorithmIdentifiers.HMAC_SHA256, JWTConstants.HMAC_SECRET, 
         		JWTConstants.ISSUER, JWTConstants.AUDIENCE, true))
-        .setExpectedStatus(403)
+        .setExpectedStatus(401)
         .assertResponse();
 
         unapplyPolicy(assertResponseBuilder);
@@ -181,7 +181,7 @@ public class RestHMACTestCase extends AbstractPolicyTestCase
         assertResponseBuilder.clear()   
         .requestHeader("Authorization", "Bearer " + JWTTokenGenerator.getHMAC(AlgorithmIdentifiers.HMAC_SHA256, JWTConstants.HMAC_SECRET, 
         		null, (String) null, false))
-        .setExpectedStatus(403)
+        .setExpectedStatus(401)
         .assertResponse();
 
         unapplyPolicy(assertResponseBuilder);
@@ -195,7 +195,7 @@ public class RestHMACTestCase extends AbstractPolicyTestCase
         
         assertResponseBuilder.clear()   
         .requestHeader("Authorization", "Bearer aaa.bbb")
-        .setExpectedStatus(403)
+        .setExpectedStatus(401)
         .assertResponse();
 
         unapplyPolicy(assertResponseBuilder);
@@ -223,7 +223,7 @@ public class RestHMACTestCase extends AbstractPolicyTestCase
         
         assertResponseBuilder.clear()   
         .requestHeader("Authorization", "Bearer aaabbbccc")
-        .setExpectedStatus(403)
+        .setExpectedStatus(401)
         .assertResponse();
 
         unapplyPolicy(assertResponseBuilder);

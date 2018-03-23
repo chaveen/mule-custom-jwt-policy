@@ -58,14 +58,26 @@ configuration:
     sensitive: false
     type: string
     defaultValue: "30000"  
-  
 description: "Validates JWT stored in header."
 id: jwt-policy
 name: "JWT policy"
 providedCharacteristics: 
-  - "JWT validation"
+  - "OAuth 2.0 protected"
 requiredCharacteristics: []
 requiresConnectivity: false
 resourceLevelSupported: true
 standalone: true
 type: custom
+ramlV1Snippet: |
+  traits: 
+   oauth_2_0:
+    description: |
+      Dropbox supports OAuth 2.0 for authenticating all API requests.
+    type: OAuth 2.0
+    describedBy:
+      headers:
+        Authorization:
+          description: |
+             Used to send a valid OAuth 2 access token. Do not use
+             with the "access_token" query string parameter.
+          type: string 
