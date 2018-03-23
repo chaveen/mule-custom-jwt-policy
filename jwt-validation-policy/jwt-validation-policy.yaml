@@ -29,6 +29,7 @@ configuration:
     sensitive: false
     type: string
     defaultValue: "https://graph.windows.net"
+    allowMultiple: true
   - 
     description: "Specifies the issuer of JWT."
     name: "Issuer"
