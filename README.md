@@ -13,6 +13,12 @@ If these checks are violated, a *401* response is given and the request is disca
 
 ## Support and Compatibility
 
+### OAuth 2.0
+OAuth 2.0 (JWT)
+- To be applied to a protected resource 
+- Token based on [rfc7519](https://tools.ietf.org/html/rfc7519)
+
+This policy does **not** support opaque bearer (by reference) token.
 ### Cryptography Algorithms
 Policy supports these algorithms for digital signature verification: 
 
@@ -23,7 +29,7 @@ Policy supports these algorithms for digital signature verification:
 
 #### Certificates
 
-- SHA256withRSA, SHA384withRSA and SHA512withRSA 
+- HmacSHA256, HmacSHA384 and HmacSHA512
 
 ### Token Providers:
 - Azure AD
