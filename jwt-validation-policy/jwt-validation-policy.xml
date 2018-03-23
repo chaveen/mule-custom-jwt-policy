@@ -37,21 +37,21 @@
 		<logger message="Policy {{ policyId }} filtered the message #[message.getId()] based on aud check violoation" level="DEBUG" doc:name="Logger"/>	  
 		<set-property propertyName="http.status" value="401" doc:name="Property"/>    
 		<set-property propertyName="Content-Type" value="application/json" doc:name="Property"/>
-		<set-payload value='{ "error" : "JWT aud is invalid"}' doc:name="Set Payload"/>
+		<set-payload value='{ "error" : "JWT aud is invalid" }' doc:name="Set Payload"/>
 	</processor-chain>
 	
 		<processor-chain xmlns="http://www.mulesoft.org/schema/mule/core" name="issViolation" doc:name="issViolation">
 		<logger message="Policy {{ policyId }} filtered the message #[message.getId()] based on iss check violation" level="DEBUG" doc:name="Logger"/>	  
 		<set-property propertyName="http.status" value="401" doc:name="Property"/>    
 		<set-property propertyName="Content-Type" value="application/json" doc:name="Property"/>
-		<set-payload value='{ "error" : "JWT iss is invalid"}' doc:name="Set Payload"/>
+		<set-payload value='{ "error" : "JWT iss is invalid" }' doc:name="Set Payload"/>
 	</processor-chain>
 	
 		<processor-chain xmlns="http://www.mulesoft.org/schema/mule/core" name="expiryViolation" doc:name="expiryViolation">
 		<logger message="Policy {{ policyId }} filtered the message #[message.getId()] based on expiry check violation" level="DEBUG" doc:name="Logger"/>	  
 		<set-property propertyName="http.status" value="401" doc:name="Property"/>    
 		<set-property propertyName="Content-Type" value="application/json" doc:name="Property"/>
-		<set-payload value='{ "error" : "JWT has expired"}' doc:name="Set Payload"/>
+		<set-payload value='{ "error" : "JWT has expired" }' doc:name="Set Payload"/>
 	</processor-chain>
 	
 			<processor-chain xmlns="http://www.mulesoft.org/schema/mule/core" name="signatureViolation" doc:name="signatureViolation">
@@ -65,14 +65,14 @@
 	 	<logger message="Policy {{ policyId }} filtered the message #[message.getId()] based on authorization header check violation" level="DEBUG" doc:name="Logger"/>	  
       <set-property propertyName="http.status" value="401" doc:name="Property"/>    
       <set-property propertyName="Content-Type" value="application/json" doc:name="Property"/>
-      <set-payload value='{ "error" : " Authorization header not provided"}' doc:name="Set Payload"/>
+      <set-payload value='{ "error" : " Authorization header not provided" }' doc:name="Set Payload"/>
     </processor-chain>
   	
 	<processor-chain xmlns="http://www.mulesoft.org/schema/mule/core" name="authFormatViolation" doc:name="authFormatViolation">
 	  <logger message="Policy {{ policyId }} filtered the message #[message.getId()] based on authorization header format check violation" level="DEBUG" doc:name="Logger"/>	
 	  <set-property propertyName="http.status" value="401" doc:name="Property"/>    
 	  <set-property propertyName="Content-Type" value="application/json" doc:name="Property"/>
-	  <set-payload value='{ "error" : "Authorization header has invalid format"}' doc:name="Set Payload"/>
+	  <set-payload value='{ "error" : "Authorization header has invalid format" }' doc:name="Set Payload"/>
 	</processor-chain>
 	
   <before>  	
@@ -115,7 +115,7 @@
     
     <mule:logger xmlns:mule="http://www.mulesoft.org/schema/mule/core" level="DEBUG" message="Policy {{ policyId }} applying JWT Issuer check." doc:name="Debug Logger"/>
     <mule:message-filter xmlns:mule="http://www.mulesoft.org/schema/mule/core" onUnaccepted="issViolation" doc:name="Check Issuer">
-        <mule:expression-filter xmlns:mule="http://www.mulesoft.org/schema/mule/core" expression="#[flowVars.jwtPayload.iss == 'https://sts.windows.net/b989f104-d41b-4f40-b814-1a3bfee7dbc7/']" name="IssuerFilter"/>
+        <mule:expression-filter xmlns:mule="http://www.mulesoft.org/schema/mule/core" expression="#[flowVars.jwtPayload.iss == '{{{ issuer }}}']" name="IssuerFilter"/>
     </mule:message-filter>	
     
      <mule:expression-component doc:name="Check Audience"><![CDATA[	

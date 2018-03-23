@@ -69,15 +69,21 @@ resourceLevelSupported: true
 standalone: true
 type: custom
 ramlV1Snippet: |
-  traits: 
-   oauth_2_0:
-    description: |
-      Dropbox supports OAuth 2.0 for authenticating all API requests.
-    type: OAuth 2.0
-    describedBy:
-      headers:
-        Authorization:
-          description: |
-             Used to send a valid OAuth 2 access token. Do not use
-             with the "access_token" query string parameter.
-          type: string 
+ #%RAML 1.0 Trait
+  headers:
+    Authorization:
+      description: "Used to send a valid OAuth 2 based JWT."
+      type: string 
+  responses: 
+    401:
+      description: Unauthorised reponses
+      body: 
+        application/json:
+          examples: 
+            aud-invalid: '{ "error" : "JWT aud is invalid" }'
+            iss-invalid: '{ "error" : "JWT iss is invalid" }'
+            expiry: '{ "error" : "JWT has expired" }'
+            signature-invalid: '{ "error" : "JWT has invalid signature"}'
+            missing-header: '{ "error" : " Authorization header not provided" }'
+            invalid-format: '{ "error" : "Authorization header has invalid format" }'
+    403:
