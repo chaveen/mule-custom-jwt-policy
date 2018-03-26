@@ -28,8 +28,9 @@ configuration:
     propertyName: audience
     sensitive: false
     type: string
-    defaultValue: "https://graph.windows.net"
+    defaultValue: "null"
     allowMultiple: true
+    optional: true
   - 
     description: "Specifies the issuer of JWT."
     name: "Issuer"

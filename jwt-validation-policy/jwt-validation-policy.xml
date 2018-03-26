@@ -58,7 +58,7 @@
 		<logger message="Policy {{ policyId }} filtered the message #[message.getId()] based on signature check violation" level="DEBUG" doc:name="Logger"/>	  
 		<set-property propertyName="http.status" value="401" doc:name="Property"/>    
 		<set-property propertyName="Content-Type" value="application/json" doc:name="Property"/>
-		<set-payload value='{ "error" : "JWT has invalid signature"}' doc:name="Set Payload"/>
+		<set-payload value='{ "error" : "JWT has invalid signature" }' doc:name="Set Payload"/>
 	</processor-chain>
  
 	<processor-chain xmlns="http://www.mulesoft.org/schema/mule/core" name="authorizationHeaderViolation" doc:name="authorizationHeaderViolation">
@@ -117,19 +117,34 @@
     <mule:message-filter xmlns:mule="http://www.mulesoft.org/schema/mule/core" onUnaccepted="issViolation" doc:name="Check Issuer">
         <mule:expression-filter xmlns:mule="http://www.mulesoft.org/schema/mule/core" expression="#[flowVars.jwtPayload.iss == '{{{ issuer }}}']" name="IssuerFilter"/>
     </mule:message-filter>	
-    
-     <mule:expression-component doc:name="Check Audience"><![CDATA[	
-		flowVars['audienceMatch'] = false;		
-		
-		if (flowVars['jwtPayload'].aud instanceof java.util.ArrayList){
-			for (String aud : flowVars['jwtPayload'].aud){					
-				if (aud.equals("{{{ audience }}}"))
-					flowVars['audienceMatch'] = true;
+
+
+
+        <!-- if there is a list of audiences we iterate -->
+        <mule:expression-component doc:name="Check Audience"><![CDATA[if("{{{ audience }}}".equals("null"))
+{
+	flowVars['audienceMatch'] = true;
+}
+else if (flowVars['jwtPayload'].aud instanceof java.util.ArrayList)
+{
+	for (String aud : flowVars['jwtPayload'].aud)
+    {					
+			if (aud.equals("{{{ audience }}}"))
+			{
+				flowVars['audienceMatch'] = true;
 			}
-		}
-		else if (flowVars['jwtPayload'].aud != null){
+	}
+}
+else if (flowVars['jwtPayload'].aud != null)
+{
 			flowVars['audienceMatch'] = flowVars['jwtPayload'].aud.equals("{{{ audience }}}");
-		}]]></mule:expression-component>
+} 
+else
+{
+			flowVars['audienceMatch'] = false;
+}
+		]]></mule:expression-component>
+
 		
 		    <mule:message-filter xmlns:mule="http://www.mulesoft.org/schema/mule/core" onUnaccepted="audViolation" doc:name="Check Audience">
         <mule:expression-filter xmlns:mule="http://www.mulesoft.org/schema/mule/core" expression="#[flowVars.audienceMatch]" name="AudienceFilter"/>

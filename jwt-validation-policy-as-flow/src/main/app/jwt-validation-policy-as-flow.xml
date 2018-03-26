@@ -18,7 +18,7 @@ http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/htt
 http://www.mulesoft.org/schema/mule/ee/tracking http://www.mulesoft.org/schema/mule/ee/tracking/current/mule-tracking-ee.xsd
 http://www.mulesoft.org/schema/mule/ee/dw http://www.mulesoft.org/schema/mule/ee/dw/current/dw.xsd
 http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
-    <http:listener-config name="HTTP_Listener_Configuration" host="0.0.0.0" port="8081" doc:name="HTTP Listener Configuration"/>
+    <http:listener-config name="HTTP_Listener_Configuration" host="0.0.0.0" port="8081"  doc:name="HTTP Listener Configuration"/>
     <http:request-config name="HTTP_Request_Configuration" host="login.microsoftonline.com" port="80" doc:name="HTTP Request Configuration" basePath="common/discovery/keys"/>
     <ee:object-store-caching-strategy name="Caching_Strategy" keyGenerationExpression="#[flowVars.jwtHeader.x5t]" doc:name="Caching Strategy">
         <in-memory-store name="public_keys_x5t" maxEntries="100" entryTTL="300000" expirationInterval="30000"/>
@@ -111,18 +111,29 @@ http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/
     </message-filter>
     
         <!-- if there is a list of audiences we iterate -->
-        <expression-component doc:name="Check Audience"><![CDATA[	
-		flowVars['audienceMatch'] = false;		
-		
-		if (flowVars['jwtPayload'].aud instanceof java.util.ArrayList){
-			for (String aud : flowVars['jwtPayload'].aud){					
-				if (aud.equals("https://graph.windows.net"))
-					flowVars['audienceMatch'] = true;
+        <expression-component doc:name="Check Audience"><![CDATA[if("{{{ audience }}}".equals("null"))
+{
+	flowVars['audienceMatch'] = true;
+}
+else if (flowVars['jwtPayload'].aud instanceof java.util.ArrayList)
+{
+	for (String aud : flowVars['jwtPayload'].aud)
+    {					
+			if (aud.equals("https://graph.windows.net"))
+			{
+				flowVars['audienceMatch'] = true;
 			}
-		}
-		else if (flowVars['jwtPayload'].aud != null){
+	}
+}
+else if (flowVars['jwtPayload'].aud != null)
+{
 			flowVars['audienceMatch'] = flowVars['jwtPayload'].aud.equals("https://graph.windows.net");
-		}]]></expression-component>
+} 
+else
+{
+			flowVars['audienceMatch'] = false;
+}
+		]]></expression-component>
     
     <message-filter xmlns:mule="http://www.mulesoft.org/schema/mule/core" onUnaccepted="audViolation" doc:name="Check Audience">
         <expression-filter xmlns:mule="http://www.mulesoft.org/schema/mule/core" expression="#[flowVars.audienceMatch]" name="AudienceFilter"/>
