@@ -23,6 +23,15 @@ configuration:
     type: string
     defaultValue: "80"
   - 
+    description: "Specifies the public key of the JWT."
+    name: "Secret"
+    propertyName: secret
+    sensitive: false
+    type: string
+    defaultValue: "null"
+    allowMultiple: false
+    optional: true
+  - 
     description: "Specifies the requested audience of JWT."
     name: "Audience"
     propertyName: audience

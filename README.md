@@ -77,16 +77,18 @@ Keys will be cached, the following configure are required to configure the cache
 
 ### secret or public key
 
-+  *Secret* - (to be implemented) specifies a secret (in case of HmacSHA algorithms) or a public key (SHAwithRSA algorithms) for JWT digital signature algorithm. A public key is inserted without BEGIN and END parts, i.e.:
-
++  *Secret* -  specifies a secret (in case of HmacSHA algorithms) or a public key (SHAwithRSA algorithms) for JWT digital signature algorithm. 
+	+  set to null if the key should be returned from JWKS service.
+	+  A JWT token can be signed with any of the supported algorithms.
+	+  A public key is inserted without BEGIN and END parts, i.e.:
+```
 		MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEArLrCUilXj+ggjh/kq/EhEsAXWhyF511k
 		tdddFxuOts6ZEcq9u9OP1WnXO14qvZwsd4RBJ3RVm9bMQQzlproMlhkjihsz4ETQS8Ko3e3N0j6+
 		is+jwX5hOVRu7WrD+iqE8AcoNtkTf8YwntHqWGMxzQSl57VQ7NSf4a/VSSBKW3oZy0tYQMZECZow
 		aLlfjgPibrw9TGwYPceF0e203HuF9fSfqvlGSrr8QPDmwT3Tvp96yF3nwTDiTGdL1YTSUI8SFjzF
 		STNVCTKc9P0e9MMdE28nZL9NDPWmi/DnYs6t32uolMc2erEd5OjSQ7Rry58Jt6IaURC93xuN9wir
 		mxp8UQIDAQAB
-	  
-**Note**: A JWT token can be signed with any of the supported algorithms but the policy will use a parameter *Secret* in all cases so only one algorithm group will work.
+```	  
 
 ### Token validations
 

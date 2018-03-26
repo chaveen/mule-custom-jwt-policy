@@ -141,18 +141,25 @@ else
          
     <enricher source="payload" target="flowVars.public_key_or_cert" doc:name="Get Key to check signature">
         <processor-chain doc:name="Processor Chain">
-                <ee:cache doc:name="Cache" cachingStrategy-ref="Caching_Strategy">
-                    <logger message="cache miss" level="DEBUG" doc:name="Logger"/>
-                    <http:request config-ref="HTTP_Request_Configuration" path="/" method="GET" doc:name="HTTP" metadata:id="4f2cee77-2a1d-4d8b-a618-00d27c092225"></http:request>
-                    <dw:transform-message doc:name="Transform Message" metadata:id="82cc8c48-d8bd-48aa-bf1d-ac1e7bc74f59">
-                        <dw:input-payload doc:sample="sample_data/json.json"/>
-                        <dw:input-variable variableName="jwtHeader"/>
-                        <dw:set-payload><![CDATA[%dw 1.0
+                <choice doc:name="get public key from config or JWKS ">
+                    <when expression="#[&quot;null&quot;.equals(&quot;{{{ secret }}}&quot;)]">
+                            <ee:cache cachingStrategy-ref="Caching_Strategy" doc:name="Cache">
+                            <logger message="cache miss" level="DEBUG" doc:name="Logger"></logger>
+                            <http:request config-ref="HTTP_Request_Configuration" path="/" method="GET" doc:name="Get Key from JWKS" metadata:id="4f2cee77-2a1d-4d8b-a618-00d27c092225"></http:request>
+                            <dw:transform-message doc:name="Transform Message" metadata:id="82cc8c48-d8bd-48aa-bf1d-ac1e7bc74f59">
+                                <dw:input-payload doc:sample="sample_data/json.json"/>
+                                <dw:input-variable variableName="jwtHeader"/>
+                                <dw:set-payload><![CDATA[%dw 1.0
 %output application/java
 ---
 "-----BEGIN CERTIFICATE-----\n" ++ payload.keys[?($.kid == flowVars.jwtHeader.x5t)].x5c[0][0] ++ "\n-----END CERTIFICATE-----"]]></dw:set-payload>
-                    </dw:transform-message>
-                </ee:cache>
+                            </dw:transform-message>
+                        </ee:cache>
+                    </when>
+                    <otherwise>
+						 <set-payload value="#[&quot;{{{ secret }}}&quot;]" doc:name="Use secret from config"/>
+                    </otherwise>
+                </choice>
         </processor-chain>
     </enricher>
     <choice xmlns:mule="http://www.mulesoft.org/schema/mule/core" xmlns:scripting="http://www.mulesoft.org/schema/mule/scripting" doc:name="Choice">
