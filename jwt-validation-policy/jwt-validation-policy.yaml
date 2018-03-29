@@ -3,21 +3,21 @@ category: Security
 configuration: 
   - 
     description: "Specifies the URL to obtain keys for JWT signature verification."
-    name: "keys_host"
+    name: "JWKS host"
     propertyName: keys_host
     sensitive: false
     type: string
     defaultValue: "login.microsoftonline.com"
   - 
     description: "Specifies the URL to obtain keys for JWT signature verification."
-    name: "keys_base_path"
+    name: "JWKS basepath"
     propertyName: keys_base_path
     sensitive: false
     type: string
     defaultValue: "common/discovery/keys"
   - 
     description: "Specifies the URL to obtain keys for JWT signature verification."
-    name: "keys_port"
+    name: "JWKS port"
     propertyName: keys_port
     sensitive: false
     type: string
@@ -49,21 +49,21 @@ configuration:
     defaultValue: 
   - 
     description: "how many keys to cache?"
-    name: "cacheEntries"
+    name: "Cache Entries"
     propertyName: cache_entries
     sensitive: false
     type: string
     defaultValue: "100"
   - 
     description: "When should the cache entries expire?"
-    name: "cacheTTL"
+    name: "cache TTL"
     propertyName: cache_ttl
     sensitive: false
     type: string
     defaultValue: "300000"
   - 
     description: "How often should TTL be evaluated?"
-    name: "cacheInterval"
+    name: "Cache Interval"
     propertyName: cache_interval
     sensitive: false
     type: string

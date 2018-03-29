@@ -111,29 +111,37 @@ http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/
     </message-filter>
     
         <!-- if there is a list of audiences we iterate -->
-        <expression-component doc:name="Check Audience"><![CDATA[if("{{{ audience }}}".equals("null"))
+        <expression-component doc:name="Check Audience"><![CDATA[flowVars['audienceMatch'] = false;
+
+String[] audTocheck =  org.mule.util.StringUtils.splitAndTrim("https://graph.windows.net,https://graph.microsoft.com",","); 
+        
+if("{{{ audience }}}".equals("null"))
 {
 	flowVars['audienceMatch'] = true;
 }
 else if (flowVars['jwtPayload'].aud instanceof java.util.ArrayList)
 {
-	for (String aud : flowVars['jwtPayload'].aud)
-    {					
-			if (aud.equals("https://graph.windows.net"))
-			{
-				flowVars['audienceMatch'] = true;
+	for (int x=0; x<audTocheck.length; x++)
+	{
+			for (String aud : flowVars['jwtPayload'].aud)
+		    {					
+					if (aud.equals(audTocheck[x]))
+					{
+						flowVars['audienceMatch'] = true;
+					}
 			}
 	}
 }
 else if (flowVars['jwtPayload'].aud != null)
 {
-			flowVars['audienceMatch'] = flowVars['jwtPayload'].aud.equals("https://graph.windows.net");
-} 
-else
-{
-			flowVars['audienceMatch'] = false;
-}
-		]]></expression-component>
+	for (int x=0; x<audTocheck.length; x++)
+	{
+		if (flowVars['jwtPayload'].aud.equals(audTocheck[x]))
+		{
+			flowVars['audienceMatch'] = true;
+		}
+	}
+} ]]></expression-component>
     
     <message-filter xmlns:mule="http://www.mulesoft.org/schema/mule/core" onUnaccepted="audViolation" doc:name="Check Audience">
         <expression-filter xmlns:mule="http://www.mulesoft.org/schema/mule/core" expression="#[flowVars.audienceMatch]" name="AudienceFilter"/>
@@ -142,7 +150,9 @@ else
     <enricher source="payload" target="flowVars.public_key_or_cert" doc:name="Get Key to check signature">
         <processor-chain doc:name="Processor Chain">
                 <choice doc:name="get public key from config or JWKS ">
-                    <when expression="#[&quot;null&quot;.equals(&quot;{{{ secret }}}&quot;)]">
+                    <when expression="#[&quot;null&quot;.equals(&quot;null&quot;)]">
+<!--                                         <when expression="#[&quot;null&quot;.equals(&quot;{{{ secret }}}&quot;)]"> -->
+                    
                             <ee:cache cachingStrategy-ref="Caching_Strategy" doc:name="Cache">
                             <logger message="cache miss" level="DEBUG" doc:name="Logger"></logger>
                             <http:request config-ref="HTTP_Request_Configuration" path="/" method="GET" doc:name="Get Key from JWKS" metadata:id="4f2cee77-2a1d-4d8b-a618-00d27c092225"></http:request>
@@ -158,6 +168,7 @@ else
                     </when>
                     <otherwise>
 						 <set-payload value="#[&quot;{{{ secret }}}&quot;]" doc:name="Use secret from config"/>
+						 
                     </otherwise>
                 </choice>
         </processor-chain>
@@ -189,7 +200,6 @@ else
 					algorithm = "SHA512withRSA";
 					break;												
 			}			
-			boolean verified = false;
 			
 			try{
 				CertificateFactory certFactory = CertificateFactory.getInstance("X.509");
@@ -200,6 +210,8 @@ else
         		publicSignature.update((flowVars['jwtParts'][0] + '.' + flowVars['jwtParts'][1]).getBytes());
 				Base64 base64 = new Base64(true);
         		byte[] signatureBytes = base64.decode(flowVars['jwtParts'][2].getBytes("UTF-8"));
+
+				org.apache.logging.log4j.LogManager.getLogger(org.mule.api.processor.LoggerMessageProcessor.class).debug("Policy {{ policyId }}: JWT signature being verified");				
 
         		verified = publicSignature.verify(signatureBytes);		
         					
