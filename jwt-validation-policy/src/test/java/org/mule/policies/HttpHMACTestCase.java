@@ -31,6 +31,14 @@ public class HttpHMACTestCase extends AbstractPolicyTestCase {
         parameters.put("secret", JWTConstants.HMAC_SECRET);
         parameters.put("audience", JWTConstants.AUDIENCE);
         parameters.put("issuer", JWTConstants.ISSUER);
+        parameters.put("keys_host", JWTConstants.KEYS_HOST);
+        parameters.put("keys_base_path", JWTConstants.KEYS_BASE_PATH);
+        parameters.put("keys_port", JWTConstants.KEYS_PORT);
+        parameters.put("cache_entries", JWTConstants.CACHE_ENTRIES);
+        parameters.put("cache_ttl", JWTConstants.CACHE_TTL);
+        parameters.put("cache_interval", JWTConstants.CACHE_INTERVAL);
+   
+
         
         super.compilePolicy();
     }
