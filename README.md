@@ -95,6 +95,7 @@ Keys will be cached, the following configure are required to configure the cache
 +  *Issuer* - defines an issuer of JWT token
 +  *Audience* - requested audience of JWT token.
 	+  Set to null if you want to skip aud check.
+	+  provide multiple audiences as a comma separated list.
 
 Note: Tests need to be updated and are failing.
 
