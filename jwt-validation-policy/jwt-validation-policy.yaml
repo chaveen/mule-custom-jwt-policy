@@ -2,39 +2,18 @@
 category: Security
 configuration: 
   - 
-    description: "Specifies the URL to obtain keys for JWT signature verification."
-    name: "JWKS host"
-    propertyName: keys_host
-    sensitive: false
-    type: string
-    defaultValue: "login.microsoftonline.com"
-  - 
-    description: "Specifies the URL to obtain keys for JWT signature verification."
-    name: "JWKS basepath"
-    propertyName: keys_base_path
-    sensitive: false
-    type: string
-    defaultValue: "common/discovery/keys"
-  - 
-    description: "Specifies the URL to obtain keys for JWT signature verification."
-    name: "JWKS port"
-    propertyName: keys_port
-    sensitive: false
-    type: string
-    defaultValue: "80"
-  - 
-    description: "Specifies the public key of the JWT."
-    name: "Secret"
-    propertyName: secret
+    description: "Specifies the expected audience in the JWT."
+    name: "Audience"
+    propertyName: audience
     sensitive: false
     type: string
     defaultValue: "null"
-    allowMultiple: false
+    allowMultiple: true
     optional: true
   - 
-    description: "Specifies the requested audience of JWT."
-    name: "Audience"
-    propertyName: audience
+    description: "Specifies the expected scopes."
+    name: "Scopes"
+    propertyName: scope
     sensitive: false
     type: string
     defaultValue: "null"
@@ -47,6 +26,36 @@ configuration:
     sensitive: false
     type: string
     defaultValue: 
+  - 
+    description: "Specifies the public key of the JWT or set to null to use JWKS service"
+    name: "Secret"
+    propertyName: secret
+    sensitive: false
+    type: string
+    defaultValue: "null"
+    allowMultiple: false
+    optional: true
+  - 
+    description: "Specifies the JWKS URL to obtain keys for JWT signature verification."
+    name: "JWKS host"
+    propertyName: keys_host
+    sensitive: false
+    type: string
+    defaultValue: "login.microsoftonline.com"
+  - 
+    description: "Specifies the JWKS URL to obtain keys for JWT signature verification."
+    name: "JWKS basepath"
+    propertyName: keys_base_path
+    sensitive: false
+    type: string
+    defaultValue: "common/discovery/keys"
+  - 
+    description: "Specifies the JWKS URL to obtain keys for JWT signature verification."
+    name: "JWKS port"
+    propertyName: keys_port
+    sensitive: false
+    type: string
+    defaultValue: "80"
   - 
     description: "how many keys to cache?"
     name: "Cache Entries"

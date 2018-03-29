@@ -6,6 +6,7 @@ This Policy implements the following checks on a JSON Web Token contained in Aut
 
 - Issuer
 - Audience
+- Scope
 - Expiration
 - Signature
 
@@ -34,6 +35,7 @@ Policy supports these algorithms for digital signature verification:
 
 ### Token Providers:
 - Azure AD
+	- V1 endpoints
 - [jwt.io](https://jwt.io/) (For testing)
 
 ### Tested with MuleSoft Anypoint Platform
@@ -92,11 +94,14 @@ Keys will be cached, the following configure are required to configure the cache
 
 ### Token validations
 
-+  *Issuer* - defines an issuer of JWT token
-+  *Audience* - requested audience of JWT token.
++  *Issuer* - defines an issuer of JSON Web Token
++  *Audience* - expected audience of JSON Web Token.
 	+  Set to null if you want to skip aud check.
 	+  provide multiple audiences as a comma separated list.
-
++  *Scope* -  scopes to be present in the JWT .
+	+  Set to null if you want to skip scp check.
+	+  provide multiple scopes as a comma separated list.
+	+  
 Note: Tests need to be updated and are failing.
 
 

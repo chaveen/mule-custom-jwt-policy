@@ -40,6 +40,13 @@
 		<set-payload value='{ "error" : "JWT aud is invalid" }' doc:name="Set Payload"/>
 	</processor-chain>
 	
+		<processor-chain xmlns="http://www.mulesoft.org/schema/mule/core" name="scpViolation" doc:name="scpViolation">
+		<logger message="Policy {{ policyId }} filtered the message #[message.getId()] based on scp check violoation" level="DEBUG" doc:name="Logger"/>	  
+		<set-property propertyName="http.status" value="401" doc:name="Property"/>    
+		<set-property propertyName="Content-Type" value="application/json" doc:name="Property"/>
+		<set-payload value='{ "error" : "JWT has insufficient scp"}' doc:name="Set Payload"/>
+	</processor-chain>
+	
 		<processor-chain xmlns="http://www.mulesoft.org/schema/mule/core" name="issViolation" doc:name="issViolation">
 		<logger message="Policy {{ policyId }} filtered the message #[message.getId()] based on iss check violation" level="DEBUG" doc:name="Logger"/>	  
 		<set-property propertyName="http.status" value="401" doc:name="Property"/>    
@@ -121,33 +128,71 @@
 
 
         <!-- if there is a list of audiences we iterate -->
-        <mule:expression-component doc:name="Check Audience"><![CDATA[if("{{{ audience }}}".equals("null"))
+        <mule:expression-component doc:name="Check Audience"><![CDATA[flowVars['audienceMatch'] = false;
+
+String[] audTocheck =  org.mule.util.StringUtils.splitAndTrim("{{{ audience }}}",","); 
+        
+if("{{{ audience }}}".equals("null"))
 {
 	flowVars['audienceMatch'] = true;
 }
 else if (flowVars['jwtPayload'].aud instanceof java.util.ArrayList)
 {
-	for (String aud : flowVars['jwtPayload'].aud)
-    {					
-			if (aud.equals("{{{ audience }}}"))
-			{
-				flowVars['audienceMatch'] = true;
+	for (int x=0; x<audTocheck.length; x++)
+	{
+			for (String aud : flowVars['jwtPayload'].aud)
+		    {					
+					if (aud.equals(audTocheck[x]))
+					{
+						flowVars['audienceMatch'] = true;
+					}
 			}
 	}
 }
 else if (flowVars['jwtPayload'].aud != null)
 {
-			flowVars['audienceMatch'] = flowVars['jwtPayload'].aud.equals("{{{ audience }}}");
-} 
-else
-{
-			flowVars['audienceMatch'] = false;
-}
-		]]></mule:expression-component>
+	for (int x=0; x<audTocheck.length; x++)
+	{
+		if (flowVars['jwtPayload'].aud.equals(audTocheck[x]))
+		{
+			flowVars['audienceMatch'] = true;
+		}
+	}
+} ]]></mule:expression-component>
 
-		
+		        <mule:logger xmlns:mule="http://www.mulesoft.org/schema/mule/core" level="DEBUG" message="Policy {{ policyId }} applying JWT scp check." doc:name="Debug Logger"/>     
 		    <mule:message-filter xmlns:mule="http://www.mulesoft.org/schema/mule/core" onUnaccepted="audViolation" doc:name="Check Audience">
         <mule:expression-filter xmlns:mule="http://www.mulesoft.org/schema/mule/core" expression="#[flowVars.audienceMatch]" name="AudienceFilter"/>
+    </mule:message-filter>
+    
+    
+     <!-- if there is a list of scopes we iterate -->
+        <mule:expression-component doc:name="Check Scope"><![CDATA[flowVars['scopeMatch'] = false;
+String[] scpTocheck =  org.mule.util.StringUtils.splitAndTrim("{{{ scope }}}",","); 
+        
+if("{{{ scope }}}".equals("null"))
+{
+	flowVars['scopeMatch'] = true;
+}
+else if (flowVars['jwtPayload'].scp != null)
+{
+	String[] scpInJWT = org.mule.util.StringUtils.splitAndTrim(flowVars['jwtPayload'].scp," ");
+	for (int y=0; y<scpInJWT.length; y++)
+	{
+		for (int x=0; x<scpTocheck.length; x++)
+		{
+			if (scpInJWT[y].equals(scpTocheck[x]))
+			{
+				flowVars['scopeMatch'] = true;
+			}
+		}
+	}
+} ]]></mule:expression-component>
+             
+         
+         
+    <mule:message-filter xmlns:mule="http://www.mulesoft.org/schema/mule/core" onUnaccepted="scpViolation" doc:name="Check SCope">
+        <mule:expression-filter xmlns:mule="http://www.mulesoft.org/schema/mule/core" expression="#[flowVars.scopeMatch]" name="ScopeFilter"/>
     </mule:message-filter>
 		
     <mule:enricher source="payload" target="flowVars.public_key_or_cert" doc:name="Get Key to check signature">
@@ -351,6 +396,14 @@ else
     <mule:remove-variable xmlns:mule="http://www.mulesoft.org/schema/mule/core" variableName="isValidSignature" doc:name="remove isValidSignature flowvars"/>
     <mule:remove-variable xmlns:mule="http://www.mulesoft.org/schema/mule/core" variableName="audienceMatch" doc:name="remove audienceMatch flowvars"/>
   </before>
+  
+    <after-exception>
+       <mule:logger level="DEBUG" message="Returning 500 due to error in policy" />
+       	<mule:set-property propertyName="http.status" value="500" doc:name="Property"/>    
+		<mule:set-property propertyName="Content-Type" value="application/json" doc:name="Property"/>
+		<mule:set-payload value='{ "error" : "Internal Error" }' doc:name="Set Payload"/>
+   </after-exception>
+  
   
 {{#pointcutData.length}}
   {{#pointcutData}}
