@@ -5,7 +5,7 @@
 	<groupId>com.bp.mulesoft</groupId>
 	<artifactId>jwt-token-exchange-library</artifactId>
     <version>1.0.0-SNAPSHOT</version>
-    <packaging>mule</packaging>
+    <packaging>jar</packaging>
 	<name>Mule jwt-token-exchange-library Application</name>
 
     <properties>
