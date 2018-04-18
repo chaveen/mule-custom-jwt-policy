@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:tracking="http://www.mulesoft.org/schema/mule/ee/tracking" xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:dw="http://www.mulesoft.org/schema/mule/ee/dw" xmlns:metadata="http://www.mulesoft.org/schema/mule/metadata" xmlns:vm="http://www.mulesoft.org/schema/mule/vm" xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xmlns:spring="http://www.springframework.org/schema/beans" 
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-current.xsd
+http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-current.xsd
+http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/vm http://www.mulesoft.org/schema/mule/vm/current/mule-vm.xsd
+http://www.mulesoft.org/schema/mule/ee/dw http://www.mulesoft.org/schema/mule/ee/dw/current/dw.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/ee/tracking http://www.mulesoft.org/schema/mule/ee/tracking/current/mule-tracking-ee.xsd">
+    <http:request-config name="HTTP_Request_Configuration" protocol="HTTPS" host="${azuread.host}" port="${azuread.port}" doc:name="HTTP Request Configuration" basePath="${azuread.path}"/>
+    
+    <context:property-placeholder location="classpath:local.properties"/>
+    <http:listener-config name="HTTP_Listener_Configuration" host="0.0.0.0" port="8081" basePath="/token" doc:name="HTTP Listener Configuration"/>
+    <flow name="jwt-token-exchange-libraryFlow1">
+        <dw:transform-message doc:name="Strip bearer string from token if exists">
+            <dw:set-payload><![CDATA[%dw 1.0
+%output application/json
+---
+{
+	assertion: payload.assertion replace /^(Bearer )/ with "" when payload.assertion contains 'Bearer' otherwise payload.assertion,
+	resource: payload.resource
+}]]></dw:set-payload>
+        </dw:transform-message>
+        <logger message="[#[payload]]" level="INFO" doc:name="Logger"/>
+        <dw:transform-message doc:name="Create payload to retrieve token" metadata:id="b50e0748-e873-4757-a9b3-c02e40fa282c">
+            <dw:input-payload mimeType="application/json"/>
+            <dw:set-payload><![CDATA[%dw 1.0
+%output application/json
+
+%var authHeader = inboundProperties.'authorization'
+---
+{
+  	grant_type: "urn:ietf:params:oauth:grant-type:jwt-bearer",
+	client_id: '${azuread.client_id}',
+	client_secret: '${azuread.client_secret}',
+  	assertion: payload.assertion,
+  	requested_token_use: 'on_behalf_of',
+  	resource: payload.resource
+}]]></dw:set-payload>
+        </dw:transform-message>
+        <http:request config-ref="HTTP_Request_Configuration" path="/" method="GET" doc:name="get:/token"/>
+        <logger message="#[payload]" level="INFO" doc:name="Logger"/>
+    </flow>
+</mule>

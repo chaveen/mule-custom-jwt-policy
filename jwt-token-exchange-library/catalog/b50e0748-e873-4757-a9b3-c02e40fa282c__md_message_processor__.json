@@ -1,0 +1,11 @@
+{
+    "inputMessageMetadata": {
+        "messagePayload": {
+            "connectorName": "#_custom_mule_metadata_type_#",
+            "typeId": "jwt-payload"
+        }
+    },
+    "outputMessageMetadata": {},
+    "id": "b50e0748-e873-4757-a9b3-c02e40fa282c",
+    "version": "5.2.0.0"
+}

@@ -1,0 +1,11 @@
+{
+    "inputMessageMetadata": {},
+    "outputMessageMetadata": {
+        "inboundProperties": {
+            "resource": {},
+            "assertion": {}
+        }
+    },
+    "id": "c0c9a7a3-fc3c-4b53-a021-36ccae22594f",
+    "version": "5.2.0.0"
+}
