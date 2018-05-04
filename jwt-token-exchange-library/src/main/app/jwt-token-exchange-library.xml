@@ -1,27 +1,70 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<mule xmlns:json="http://www.mulesoft.org/schema/mule/json"
+<mule xmlns:metadata="http://www.mulesoft.org/schema/mule/metadata"
 	xmlns:tracking="http://www.mulesoft.org/schema/mule/ee/tracking"
-	xmlns:context="http://www.springframework.org/schema/context" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
-	xmlns:dw="http://www.mulesoft.org/schema/mule/ee/dw" xmlns:metadata="http://www.mulesoft.org/schema/mule/metadata"
-	xmlns:vm="http://www.mulesoft.org/schema/mule/vm" xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns:objectstore="http://www.mulesoft.org/schema/mule/objectstore"
+	xmlns:json="http://www.mulesoft.org/schema/mule/json" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns:dw="http://www.mulesoft.org/schema/mule/ee/dw" xmlns:http="http://www.mulesoft.org/schema/mule/http"
 	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
 	xmlns:spring="http://www.springframework.org/schema/beans" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-	xsi:schemaLocation="http://www.mulesoft.org/schema/mule/json http://www.mulesoft.org/schema/mule/json/current/mule-json.xsd
-http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-current.xsd
-http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-current.xsd
-http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-current.xsd
+http://www.mulesoft.org/schema/mule/json http://www.mulesoft.org/schema/mule/json/current/mule-json.xsd
 http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
-http://www.mulesoft.org/schema/mule/vm http://www.mulesoft.org/schema/mule/vm/current/mule-vm.xsd
-http://www.mulesoft.org/schema/mule/ee/dw http://www.mulesoft.org/schema/mule/ee/dw/current/dw.xsd
 http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/ee/dw http://www.mulesoft.org/schema/mule/ee/dw/current/dw.xsd
+http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/objectstore http://www.mulesoft.org/schema/mule/objectstore/current/mule-objectstore.xsd
 http://www.mulesoft.org/schema/mule/ee/tracking http://www.mulesoft.org/schema/mule/ee/tracking/current/mule-tracking-ee.xsd">
+
+	<objectstore:config name="ObjectStore__Connector"
+		objectStore-ref="api_access_token" doc:name="ObjectStore: Connector"
+		entryTtl="${api.objectstore.accessToken.entryTTL}" expirationInterval="${api.objectstore.accessToken.expirationInterval}"
+		maxEntries="${api.objectstore.accessToken.maxEntry}" />
 	<http:request-config name="HTTP_Request_Configuration"
 		protocol="HTTPS" host="${azuread.host}" port="${azuread.port}"
-		doc:name="HTTP Request Configuration"  />
-	
-	<flow name="jwt-token-exchange-libraryFlow">
-		<dw:transform-message doc:name="Strip bearer string from token if exists">
+		doc:name="HTTP Request Configuration" basePath="${azuread.tenant_id.basepath}" />
+	<ee:object-store-caching-strategy
+		name="access_token-caching-strategy" keyGenerationExpression="#[payload.assertion]"
+		doc:name="Caching Strategy">
+		<in-memory-store name="api_access_token" maxEntries="100"
+			entryTTL="${api.objectstore.accessToken.entryTTL}"
+			expirationInterval="${api.objectstore.accessToken.expirationInterval}" />
+	</ee:object-store-caching-strategy>
+	<!-- <http:listener-config name="HTTP_Listener_Configuration"
+		host="0.0.0.0" port="8083" doc:name="HTTP Listener Configuration" /> -->
+
+	<http:request-config name="http_request_refresh_token"
+		doc:name="HTTP Request Configuration" basePath="${azuread.tenant_id.basepath}"
+		host="${azuread.host}" port="${azuread.port}" protocol="HTTPS">
+	</http:request-config>
+	<processor-chain xmlns="http://www.mulesoft.org/schema/mule/core"
+		name="authFormatViolation" doc:name="authFormatViolation">
+		<logger
+			message="Policy {{ policyId }} filtered the message #[message.getId()] based on authorization header format check violation"
+			level="DEBUG" doc:name="Logger" />
+		<set-property propertyName="http.status" value="401"
+			doc:name="Property" />
+		<set-property propertyName="Content-Type" value="application/json"
+			doc:name="Property" />
+		<set-payload value='{ "error" : "Authorization header has invalid format"}'
+			doc:name="Set Payload" />
+	</processor-chain>
+	<processor-chain xmlns="http://www.mulesoft.org/schema/mule/core"
+		name="expiryViolation" doc:name="expiryViolation">
+		<logger
+			message="Policy {{ policyId }} filtered the message #[message.getId()] based on expiry check violation"
+			level="DEBUG" doc:name="Logger" />
+		<set-property propertyName="http.status" value="401"
+			doc:name="Property" />
+		<set-property propertyName="Content-Type" value="application/json"
+			doc:name="Property" />
+		<set-payload value='{ "error" : "JWT has expired"}'
+			doc:name="Set Payload" />
+	</processor-chain>
+	<sub-flow name="token-exchange">
+        <logger message="'Payload before stipping the Bearer string: ' + #[payload]" level="INFO" doc:name="Log Payload"/>
+		<dw:transform-message doc:name="Strip bearer string from token if exists" metadata:id="1932b7bf-8f7e-41cc-a51e-5b816c063c5d">
+            <dw:input-payload doc:sample="resource_assertion.json" mimeType="application/json"/>
 			<dw:set-payload><![CDATA[%dw 1.0
 %output application/json
 ---
@@ -30,8 +73,7 @@ http://www.mulesoft.org/schema/mule/ee/tracking http://www.mulesoft.org/schema/m
 	resource: payload.resource
 }]]></dw:set-payload>
 		</dw:transform-message>
-		<dw:transform-message doc:name="Create payload to retrieve token"
-			metadata:id="b50e0748-e873-4757-a9b3-c02e40fa282c">
+		<dw:transform-message doc:name="Create payload to retrieve token">
 			<dw:input-payload mimeType="application/json" />
 			<dw:set-payload><![CDATA[%dw 1.0
 %output application/json
@@ -45,14 +87,143 @@ http://www.mulesoft.org/schema/mule/ee/tracking http://www.mulesoft.org/schema/m
   	resource: payload.resource
 }]]></dw:set-payload>
 		</dw:transform-message>
-        <logger message="#[payload]" level="INFO" doc:name="Log payload"/>
 		<json:json-to-object-transformer
 			returnClass="java.util.Map" doc:name="JSON to Object" />
 		<http:request config-ref="HTTP_Request_Configuration"
-			path="${azuread.path}" method="POST" doc:name="post:AzureAD">
+			path="${azuread.token.path}" method="POST" doc:name="post:AzureAD">
 			<http:request-builder>
-                <http:header headerName="Content-Type" value="application/x-www-form-urlencoded"/>
+				<http:header headerName="Content-Type"
+					value="application/x-www-form-urlencoded" />
 			</http:request-builder>
 		</http:request>
-	</flow>
+	</sub-flow>
+	<sub-flow name="jwt-library-get-token">
+        <logger message="@@@@@@@@ JSON Payoad  #[payload] @@@@@@@@" level="INFO" doc:name="Logger"/>
+        <dw:transform-message doc:name="set flowVars.access_token as object for ObjectStore key" metadata:id="0ab765d9-2ca2-4159-9125-1dfe012371cc">
+            <dw:input-variable mimeType="application/json" variableName="original_payload"/>
+            <dw:input-variable  mimeType="application/json" variableName="access_token"/>
+            <dw:set-variable variableName="access_token"><![CDATA[%dw 1.0
+%output application/java
+---
+payload.assertion]]></dw:set-variable>
+        </dw:transform-message>
+        <dw:transform-message doc:name="Transform Message">
+            <dw:set-variable variableName="original_payload"><![CDATA[%dw 1.0
+%output application/json
+---
+payload]]></dw:set-variable>
+        </dw:transform-message>
+        
+		<objectstore:contains config-ref="ObjectStore__Connector"
+			key="#[flowVars.access_token]" doc:name="contains-access-token" />
+		<choice doc:name="is access_token in cache">
+			<when expression="#[payload == false]">
+				<set-payload value="#[flowVars.original_payload]"
+					doc:name="set original payload - resource &amp; assertion from flowVars.payloadBackup" />
+				<flow-ref name="token-exchange" doc:name="token-exchange" />
+                <logger message="'Executed token-exchange flow successfully: payload:' + #[payload]" level="INFO" doc:name="Log successfull execution of token-exchange"/>
+                <dw:transform-message doc:name="create object with access &amp; refresh token for ObjectStore" metadata:id="0f71e68a-df15-4fef-a3d7-9423451994a0">
+                    <dw:input-payload doc:sample="/Users/ettoreguiallaurito/JWT/src/main/resources/jwt-payload.json" mimeType="application/json"/>
+                    <dw:set-payload><![CDATA[%dw 1.0
+%output application/java
+---
+
+{
+  "token_type": payload.token_type,
+  "scope": payload.scope ,
+  "expires_in": payload.expires_in,
+  "ext_expires_in": payload.ext.expires_in,
+  "expires_on": payload.expires_on ,
+  "not_before": payload.not_before ,
+  "resource": payload.resource ,
+  "access_token": payload.access_token ,
+  "refresh_token": payload.refresh_token 
+}]]></dw:set-payload>
+                </dw:transform-message>
+				<objectstore:store config-ref="ObjectStore__Connector"
+					key="#[flowVars.access_token]" value-ref="#[payload]"
+					doc:name="store-access&amp;refresh_tokens-into-ObjectStore" overwrite="true"/>
+                <dw:transform-message doc:name="transform to json">
+                    <dw:set-payload><![CDATA[%dw 1.0
+%output application/json
+---
+payload]]></dw:set-payload>
+                </dw:transform-message>
+			</when>
+			<otherwise>
+				<objectstore:retrieve config-ref="ObjectStore__Connector"
+					key="#[flowVars.access_token]" targetProperty="tokens"
+					doc:name="retrieve-access-token-from-ObjectStore" />
+                <set-payload value="#[flowVars.tokens.expires_on]" doc:name="Set Payload with flowVars.tokens.expires_on"/>
+                <choice doc:name="Is access_token expired">
+                    <when expression="#[(payload*1000l) &lt; java.lang.System.currentTimeMillis()]">
+                        <set-payload value="#[flowVars.tokens.refresh_token]" doc:name="YES - set payload as flowVars.tokens.refresh_token"/>
+                        <flow-ref name="jwt-token-refresh-library" doc:name="jwt-token-refresh-library"/>
+                        <logger message="New access token retrieved with refresh token: #[payload]" level="INFO" doc:name="Logger"/>
+                        <objectstore:store config-ref="ObjectStore__Connector" key="#[flowVars.access_token]" value-ref="#[payload]" overwrite="true" doc:name="store-new-access_token-into-ObjectStore"/>
+                    </when>
+                    <otherwise>
+                        <set-payload value="#[flowVars.tokens.access_token]" doc:name="set payload with access_token"/>
+                        <logger message="#['Access token retrieved from cache']" level="INFO" doc:name="Logger"/>
+                    </otherwise>
+                </choice>
+			</otherwise>
+		</choice>
+        <dw:transform-message doc:name="prexif Bearer string to token value if not present" metadata:id="80cd6f30-02e8-444e-ad44-5ecab76369e4">
+            <dw:input-payload mimeType="application/json"/>
+            <dw:set-payload><![CDATA[%dw 1.0
+%output application/java
+%input payload application/json
+---
+'Bearer ' ++ payload['access_token']
+]]></dw:set-payload>
+        </dw:transform-message>
+        <object-to-string-transformer doc:name="Object to String"/>
+        <logger message="Executed jwt-token-exchange-library successfully, payload: #[payload]" level="INFO" doc:name="Log successfull execution of jwt-token-exchange-library"/>
+	</sub-flow>
+	<sub-flow name="jwt-library-decode-token">
+		<set-variable variableName="jwtParts" value="#[payload.split('\\.')]"
+			doc:name="Split JWT into three" />
+		<logger
+			message="Policy {{ policyId }} applying 'flowVars['jwtParts'].length == 3' filter"
+			level="DEBUG" doc:name="Debug Logger"></logger>
+		<message-filter onUnaccepted="authFormatViolation"
+			doc:name="Does JWT contain three parts?">
+			<expression-filter expression="#[flowVars['jwtParts'].length == 3]" />
+		</message-filter>
+		<set-payload value="#[flowVars['jwtParts'][1]]" doc:name="Take JWT Body/Payload"></set-payload>
+		<expression-transformer
+			expression="#[var decoder = new org.apache.commons.codec.binary.Base64(true); var decodedBytes = decoder.decode(payload); var result = new String(decodedBytes); return result;]"
+			doc:name="decode from Base64"></expression-transformer>
+		<json:json-to-object-transformer
+			returnClass="java.util.HashMap" doc:name="JSON to Object"></json:json-to-object-transformer>
+		<set-variable variableName="jwtPayload" value="#[payload]"
+			doc:name="set JWT Payload flowvar"></set-variable>
+		<logger message="Policy {{ policyId }} applying JWT expiry check."
+			level="DEBUG" doc:name="Debug Logger"></logger>
+	</sub-flow>
+	<sub-flow name="jwt-token-refresh-library">
+		<dw:transform-message doc:name="create refresh token request payload">
+			<dw:set-payload><![CDATA[%dw 1.0
+%output application/json
+---
+{
+	grant_type: 'refresh_token',
+	client_id: '${azuread.client_id}',
+	client_secret: '${azuread.client_secret}',
+	refresh_token: payload
+}]]></dw:set-payload>
+		</dw:transform-message>
+		<json:json-to-object-transformer
+			returnClass="java.util.Map" doc:name="JSON to Object" />
+		<http:request config-ref="http_request_refresh_token"
+			path="${azuread.token.path}" method="POST" doc:name="get:/tenant_id/oauth2/token">
+			<http:request-builder>
+				<http:header headerName="Content-Type"
+					value="application/x-www-form-urlencoded" />
+			</http:request-builder>
+		</http:request>
+		<object-to-string-transformer doc:name="Object to String" />
+		<logger message="#[payload]" level="INFO" doc:name="Log payload" />
+	</sub-flow>
 </mule>
