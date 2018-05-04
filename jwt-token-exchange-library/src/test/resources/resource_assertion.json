@@ -1,0 +1,4 @@
+{
+  "resource": "http://text-system-api.cloudhub.io",
+  "assertion": "retrieve the token with Postman and add it here every time it expires"
+}

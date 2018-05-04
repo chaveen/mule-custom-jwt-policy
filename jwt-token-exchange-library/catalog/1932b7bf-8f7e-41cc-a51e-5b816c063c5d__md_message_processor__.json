@@ -1,0 +1,11 @@
+{
+    "inputMessageMetadata": {
+        "messagePayload": {
+            "connectorName": "#_custom_mule_metadata_type_#",
+            "typeId": "resource_assertion"
+        }
+    },
+    "outputMessageMetadata": {},
+    "id": "1932b7bf-8f7e-41cc-a51e-5b816c063c5d",
+    "version": "5.2.0.0"
+}

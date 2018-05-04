@@ -1,0 +1,21 @@
+{
+    "inputMessageMetadata": {
+        "flowVariables": {
+            "access_token": {
+                "connectorName": "#_custom_mule_metadata_type_#",
+                "typeId": "jwt-payload"
+            },
+            "original_payload": {
+                "connectorName": "#_custom_mule_metadata_type_#",
+                "typeId": "resource_assertion"
+            }
+        }
+    },
+    "outputMessageMetadata": {
+        "flowVariables": {
+            "access_token": {}
+        }
+    },
+    "id": "0ab765d9-2ca2-4159-9125-1dfe012371cc",
+    "version": "5.2.0.0"
+}
