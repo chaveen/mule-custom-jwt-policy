@@ -7,8 +7,8 @@ configuration:
     propertyName: audience
     sensitive: false
     type: string
-    defaultValue: "null"
-    allowMultiple: true
+    defaultValue: "null.muleosft.com"
+    allowMultiple: false
     optional: true
   - 
     description: "Specifies the expected scopes."
