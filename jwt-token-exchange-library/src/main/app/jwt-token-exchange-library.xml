@@ -130,19 +130,25 @@ payload]]></dw:set-variable>
 
 {
   "token_type": payload.token_type,
-  "scope": payload.scope,
+  "scope": payload.scope ,
   "expires_in": payload.expires_in,
   "ext_expires_in": payload.ext.expires_in,
-  "expires_on": payload.expires_on,
-  "not_before": payload.not_before,
-  "resource": payload.resource,
-  "access_token": payload.access_token,
-  "refresh_token": payload.refresh_token
+  "expires_on": payload.expires_on ,
+  "not_before": payload.not_before ,
+  "resource": payload.resource ,
+  "access_token": payload.access_token ,
+  "refresh_token": payload.refresh_token 
 }]]></dw:set-payload>
                 </dw:transform-message>
 				<objectstore:store config-ref="ObjectStore__Connector"
 					key="#[flowVars.access_token]" value-ref="#[payload]"
-					doc:name="store-access&amp;refresh_tokens-into-ObjectStore" />
+					doc:name="store-access&amp;refresh_tokens-into-ObjectStore" overwrite="true"/>
+                <dw:transform-message doc:name="transform to json">
+                    <dw:set-payload><![CDATA[%dw 1.0
+%output application/json
+---
+payload]]></dw:set-payload>
+                </dw:transform-message>
 			</when>
 			<otherwise>
 				<objectstore:retrieve config-ref="ObjectStore__Connector"
@@ -154,7 +160,6 @@ payload]]></dw:set-variable>
                         <set-payload value="#[flowVars.tokens.refresh_token]" doc:name="YES - set payload as flowVars.tokens.refresh_token"/>
                         <flow-ref name="jwt-token-refresh-library" doc:name="jwt-token-refresh-library"/>
                         <logger message="New access token retrieved with refresh token: #[payload]" level="INFO" doc:name="Logger"/>
-                        <json:json-to-object-transformer returnClass="java.util.Map" doc:name="JSON to Object"/>
                         <objectstore:store config-ref="ObjectStore__Connector" key="#[flowVars.access_token]" value-ref="#[payload]" overwrite="true" doc:name="store-new-access_token-into-ObjectStore"/>
                     </when>
                     <otherwise>
@@ -164,11 +169,13 @@ payload]]></dw:set-variable>
                 </choice>
 			</otherwise>
 		</choice>
-        <dw:transform-message doc:name="prexif Bearer string to token value if not present">
+        <dw:transform-message doc:name="prexif Bearer string to token value if not present" metadata:id="80cd6f30-02e8-444e-ad44-5ecab76369e4">
+            <dw:input-payload mimeType="application/json"/>
             <dw:set-payload><![CDATA[%dw 1.0
 %output application/java
+%input payload application/json
 ---
-"Bearer " ++ payload.access_token
+'Bearer ' ++ payload['access_token']
 ]]></dw:set-payload>
         </dw:transform-message>
         <object-to-string-transformer doc:name="Object to String"/>

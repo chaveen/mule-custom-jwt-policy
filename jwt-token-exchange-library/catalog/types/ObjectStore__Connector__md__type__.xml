@@ -3,6 +3,30 @@
   <types class="tree-map">
     <entry>
       <org.mule.common.metadata.DefaultMetaDataKey>
+        <id>java.io.Serializable</id>
+        <displayName>java.io.Serializable</displayName>
+        <category>DEFAULT</category>
+        <metaDataKeyPropertiesManager>
+          <properties>
+            <org.mule.common.metadata.key.property.dsql.DsqlFromMetaDataKeyProperty/>
+          </properties>
+        </metaDataKeyPropertiesManager>
+      </org.mule.common.metadata.DefaultMetaDataKey>
+      <org.mule.common.metadata.DefaultPojoMetaDataModel>
+        <implementationClass>java.io.Serializable</implementationClass>
+        <dataType>POJO</dataType>
+        <metaDataModelPropertiesManager>
+          <properties/>
+        </metaDataModelPropertiesManager>
+        <fields/>
+        <clazzName>java.io.Serializable</clazzName>
+        <isInterface>true</isInterface>
+        <name>Serializable</name>
+        <parentNames class="linked-hash-set"/>
+      </org.mule.common.metadata.DefaultPojoMetaDataModel>
+    </entry>
+    <entry>
+      <org.mule.common.metadata.DefaultMetaDataKey>
         <id>java.lang.Object</id>
         <displayName>java.lang.Object</displayName>
         <category>DEFAULT</category>

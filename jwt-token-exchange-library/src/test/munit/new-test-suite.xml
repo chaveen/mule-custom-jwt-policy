@@ -16,6 +16,11 @@ http://www.mulesoft.org/schema/mule/ee/tracking http://www.mulesoft.org/schema/m
 	<spring:beans>
 		<spring:import resource="classpath:jwt-token-exchange-library.xml" />
 	</spring:beans>
+	
+	<objectstore:config name="ObjectStore__Connector"
+		objectStore-ref="api_access_token" doc:name="ObjectStore: Connector"
+		entryTtl="${api.objectstore.accessToken.entryTTL}" expirationInterval="${api.objectstore.accessToken.expirationInterval}"
+		maxEntries="${api.objectstore.accessToken.maxEntry}" />
 
 	<!-- <set-variable variableName="customPayload" value="#['{&quot;resource&quot;: &quot;http://text-system-api.cloudhub.io&quot;,   &quot;assertion&quot;: &quot;eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiIsIng1dCI6IkZTaW11RnJGTm9DMHNKWEdtdjEzbk5aY2VEYyIsImtpZCI6IkZTaW11RnJGTm9DMHNKWEdtdjEzbk5aY2VEYyJ9.eyJhdWQiOiJodHRwOi8vaHlwZXJ0ZXh0LWFwaS5jbG91ZGh1Yi5pbyIsImlzcyI6Imh0dHBzOi8vc3RzLndpbmRvd3MubmV0L2I5ODlmMTA0LWQ0MWItNGY0MC1iODE0LTFhM2JmZWU3ZGJjNy8iLCJpYXQiOjE1MjUwODg4NjgsIm5iZiI6MTUyNTA4ODg2OCwiZXhwIjoxNTI1MDkyNzY4LCJhY3IiOiIxIiwiYWlvIjoiWTJkZ1lJaUsrUFBoMXNIMUN6WFBYK2FKV2lQZFlWcTFJcmx2cDJKRGY5N0oxWDFTZXhnQiIsImFtciI6WyJwd2QiXSwiYXBwaWQiOiIzNzM2OTQ3OS1iODdiLTRmMDQtYWEyNy0zZDhmODE3ZGMzMzEiLCJhcHBpZGFjciI6IjEiLCJmYW1pbHlfbmFtZSI6IlNBTUxURVNUMSIsImdpdmVuX25hbWUiOiJTQU1MVEVTVDEiLCJpcGFkZHIiOiI1Mi41Ni4xMjQuMTEwIiwibmFtZSI6IlNBTUxURVNUMSIsIm9pZCI6IjU5M2JlZjBiLTY5M2EtNDUzNi1iNWQwLTFjMjRkYTlkYTZjYyIsIm9ucHJlbV9zaWQiOiJTLTEtNS0yMS0xODAxNjc0NTMxLTUxNTk2Nzg5OS04Mzk1MjIxMTUtMTcwNzc3NDYiLCJzY3AiOiJ1c2VyX2ltcGVyc29uYXRpb24iLCJzdWIiOiJ4LUxyRW1oQ0VTYTcwejd0QVVIbkxzLXJ2Tk5kYnpsVEppUnFqT1dDRVVrIiwidGlkIjoiYjk4OWYxMDQtZDQxYi00ZjQwLWI4MTQtMWEzYmZlZTdkYmM3IiwidW5pcXVlX25hbWUiOiJTQU1MVEVTVDFAQlAzNjVURVNULm9ubWljcm9zb2Z0LmNvbSIsInVwbiI6IlNBTUxURVNUMUBCUDM2NVRFU1Qub25taWNyb3NvZnQuY29tIiwidXRpIjoiNEJQTF9tclRuMC12Z2tzMHFKSVpBQSIsInZlciI6IjEuMCJ9.H8b7KcXqOq1N_1dqgeZ1DIgNagNJWjYbsCfDeGMpaYvEVYX4f1vtnVzwvvsEsbOIBdkKgjHTS4-bCAYL2tHO7htJBhLLd_A3G__XocT9blRpZhBQnmUxqzzoyOTswsNByllfEKYFTN5L-3xI_q1SYb_TCs06KamDJa4wPFoh3NbOHLN679wzSuhnrTrg-OWIDJ6t59tSRR4FeV66chb3uNxRmT6Gs9CZvT-asESeZgrK7EeDs4Btx1iLrzuXnqpjaqJiZn22F0VOOXKE3IwUkXrigQTHO0G_QJOMF13g7-h7-3H9LXm6ZvmJFZT-OS22PnGdwBUJLuH3NV2VL3iqig&quot; }']"/> -->
 
@@ -69,10 +74,11 @@ payload.assertion]]></dw:set-variable>
         <object-to-string-transformer doc:name="Object to String"/>
         <munit:assert-not-null message="'Paylod is null but should contain an access token'" doc:name="Assert Not Null Payload"/>
         <munit:assert-true message="#[payload] " condition="#[payload.contains('Bearer')]" doc:name="Assert payload contains Bearer prefix string"/>
+        <objectstore:remove config-ref="ObjectStore__Connector" key="#[flowVars.payloadBackup.assertion]" ignoreNotExists="true" doc:name="Remove_to_clean_ObjectStore"/>
 	</munit:test>
 	
 	<munit:test name="jwt-library-get-tokenTest-Retreive_token_from_ObjectStore"
-		description="Test" ignore="true">
+		description="Test" >
 		<mock:when messageProcessor="mule:objectstore:contains" doc:name="Mock choice result to fake access-token in cache">
             <mock:with-attributes>
                 <mock:with-attribute name="doc:name" whereValue="retrieve-token-from-ObjectStore"/>
@@ -118,10 +124,10 @@ payload.assertion]]></dw:set-variable>
 	</munit:test>
 	
 	<munit:test name="jwt-library-get-tokenTest-Token_not_in_ObjectStore"
-		description="Test" ignore="true">
-		<mock:when messageProcessor="mule:objectstore:contains" doc:name="Mock">
+		description="Test" >
+		<mock:when messageProcessor=".*:.*" doc:name="Mock value in object store to force token-exchange">
             <mock:with-attributes>
-                <mock:with-attribute name="doc:name" whereValue="retrieve-token-from-ObjectStore"/>
+                <mock:with-attribute name="doc:name" whereValue="#['contains-access-token']"/>
             </mock:with-attributes>
             <mock:then-return payload="#['false']"/>
 		</mock:when>
@@ -137,6 +143,7 @@ payload]]></dw:set-payload>
 		<logger level="INFO" doc:name="Log token" message="'Token result:' + #[payload]"/>
         <munit:assert-not-null message="'Paylod is null but should contain an access token'" doc:name="Assert Not Null Payload"/>
         <munit:assert-true message="#[payload] " condition="#[payload.startsWith('Bearer ')]" doc:name="Assert payload contains Bearer prefix string"/>
+        <objectstore:remove config-ref="ObjectStore__Connector" key="#[flowVars.access_token]" ignoreNotExists="true" doc:name="Remove_to_clean_ObjectStore"/>
 	</munit:test>
 	
     <sub-flow name="populateObjectStoreToHitRefreshTokenFlow">
