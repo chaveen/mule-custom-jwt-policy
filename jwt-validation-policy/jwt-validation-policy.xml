@@ -85,18 +85,27 @@
   <before>  	
 	<mule:logger level="DEBUG" message="Policy {{ policyId }} executing."/>   
 	    	  				
-   <mule:message-filter xmlns:mule="http://www.mulesoft.org/schema/mule/core" onUnaccepted="authorizationHeaderViolation" doc:name="Does Authorization Header Exists?">
-      <mule:expression-filter xmlns:mule="http://www.mulesoft.org/schema/mule/core" expression="#[message.inboundProperties['Authorization'] != null]" name="AuthorizationHeaderFilter"/>
-    </mule:message-filter>
+        <mule:message-filter onUnaccepted="authorizationHeaderViolation" doc:name="Does Authorization Header Exists?">
+            <mule:expression-filter expression="#[message.inboundProperties['Authorization'] != null || message.inboundProperties['X-Authorization'] != null]"/>
+        </mule:message-filter>
 			
 	<!-- continue only if the Authorization header value has a valid format -->			
-	<mule:logger message="Policy {{ policyId }} applying 'message.inboundProperties['Authorization'].startsWith('Bearer ')' filter" level="DEBUG" />	
-	    <mule:message-filter xmlns:mule="http://www.mulesoft.org/schema/mule/core" onUnaccepted="authFormatViolation" doc:name="Does Authorization Header contain Bearer?">
-      <mule:expression-filter xmlns:mule="http://www.mulesoft.org/schema/mule/core" expression="#[message.inboundProperties['Authorization'].startsWith('Bearer ')]" name="AuthorizationHeaderFormatFilter"/>
-    </mule:message-filter>
-	
-	<mule:set-variable variableName="payloadBck" value="#[payload]" />
-	<mule:set-payload value="#[message.inboundProperties['Authorization'].substring(message.inboundProperties['Authorization'].indexOf(' ') + 1)]" />
+        <mule:choice doc:name="Check for Authorization or X-Authorization header">
+            <mule:when expression="#[message.inboundProperties['Authorization'] != null]">
+                <mule:message-filter onUnaccepted="authFormatViolation" doc:name="Does Authorization Header contain Bearer?">
+                    <mule:expression-filter expression="#[message.inboundProperties['Authorization'].startsWith('Bearer ') || message.inboundProperties['X-Authorization'].startsWith('Bearer ')]"/>
+                </mule:message-filter>
+                <mule:set-variable variableName="payloadBck" value="#[payload]" doc:name="Save payload"/>
+                <mule:set-payload value="#[message.inboundProperties['Authorization'].substring(message.inboundProperties['Authorization'].indexOf(' ') + 1)]" doc:name="Set JWT as payload"></mule:set-payload>
+            </mule:when>
+            <mule:otherwise>
+                <mule:message-filter onUnaccepted="authFormatViolation" doc:name="Does X-Authorization Header contain Bearer?">
+                    <mule:expression-filter expression="#[message.inboundProperties['X-Authorization'].startsWith('Bearer ')]"/>
+                </mule:message-filter>
+                <mule:set-variable variableName="payloadBck" value="#[payload]" doc:name="Save payload"/>
+                <mule:set-payload value="#[message.inboundProperties['X-Authorization'].substring(message.inboundProperties['X-Authorization'].indexOf(' ') + 1)]" doc:name="Set JWT as payload"></mule:set-payload>
+            </mule:otherwise>
+        </mule:choice>
 
 	<mule:set-variable variableName="jwtParts" value="#[payload.split('\\.')]" />
 	

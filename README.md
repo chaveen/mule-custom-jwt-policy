@@ -1,8 +1,8 @@
-# MuleSoft Anypoint Platform Custom JWT Policy
+# MuleSoft Anypoint Platform Custom JWS(JWT) Policy
 
 ## Overview
 
-This Policy implements the following checks on a JSON Web Token contained in Authorization header of HTTP request:
+This Policy implements the following checks on a JSON Web Token contained in `Authorization` or `X-Authorization` header of HTTP request:
 
 - Issuer
 - Audience
@@ -15,7 +15,7 @@ If these checks are violated, a *401* response is given and the request is disca
 ## Support and Compatibility
 
 ### OAuth 2.0
-OAuth 2.0 (JWT)
+OAuth 2.0 JWS(JWT)
 - To be applied to a protected resource 
 - Token based on [rfc7519](https://tools.ietf.org/html/rfc7519)
 
@@ -51,7 +51,7 @@ Policy supports these algorithms for digital signature verification:
 
 ### Bearer JWT
 
-HTTP Authorization header must have following form:
+HTTP `Authorization` or `X-Authorization` header must have following form:
 
     Bearer <jwt>
 

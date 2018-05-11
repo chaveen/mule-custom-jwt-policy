@@ -79,18 +79,29 @@ http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/
         <http:listener config-ref="HTTP_Listener_Configuration" path="/" doc:name="HTTP"/>
         <!--   <before>   -->
         <logger xmlns:mule="http://www.mulesoft.org/schema/mule/core" level="DEBUG" message="Policy {{ policyId }} executing" doc:name="Debug Logger"/>
-    <message-filter xmlns:mule="http://www.mulesoft.org/schema/mule/core" onUnaccepted="authorizationHeaderViolation" doc:name="Does Authorization Header Exists?">
-      <expression-filter xmlns:mule="http://www.mulesoft.org/schema/mule/core" expression="#[message.inboundProperties['Authorization'] != null]" name="AuthorizationHeaderFilter"/>
-    </message-filter>
+        <logger message="Policy {{ policyId }} applying 'message.inboundProperties['Authorization'].startsWith('Bearer ')' filter" level="DEBUG" doc:name="Debug Logger"></logger>
+        <message-filter onUnaccepted="authorizationHeaderViolation" doc:name="Does Authorization Header Exists?">
+            <expression-filter expression="#[message.inboundProperties['Authorization'] != null || message.inboundProperties['X-Authorization'] != null]"/>
+        </message-filter>
+            <!-- continue only if the Authorization header value has a valid format -->
+        
+        <choice doc:name="Check for Authorization or X-Authorization header">
+            <when expression="#[message.inboundProperties['Authorization'] != null]">
+                <message-filter onUnaccepted="authFormatViolation" doc:name="Does Authorization Header contain Bearer?">
+                    <expression-filter expression="#[message.inboundProperties['Authorization'].startsWith('Bearer ') || message.inboundProperties['X-Authorization'].startsWith('Bearer ')]"/>
+                </message-filter>
+                <set-variable variableName="payloadBck" value="#[payload]" doc:name="Save payload"/>
+                <set-payload value="#[message.inboundProperties['Authorization'].substring(message.inboundProperties['Authorization'].indexOf(' ') + 1)]" doc:name="Set JWT as payload"></set-payload>
+            </when>
+            <otherwise>
+                <message-filter onUnaccepted="authFormatViolation" doc:name="Does X-Authorization Header contain Bearer?">
+                    <expression-filter expression="#[message.inboundProperties['X-Authorization'].startsWith('Bearer ')]"/>
+                </message-filter>
+                <set-variable variableName="payloadBck" value="#[payload]" doc:name="Save payload"/>
+                <set-payload value="#[message.inboundProperties['X-Authorization'].substring(message.inboundProperties['X-Authorization'].indexOf(' ') + 1)]" doc:name="Set JWT as payload"></set-payload>
+            </otherwise>
+        </choice>
     
-    <!-- continue only if the Authorization header value has a valid format -->
-    <logger xmlns:mule="http://www.mulesoft.org/schema/mule/core" message="Policy {{ policyId }} applying 'message.inboundProperties['Authorization'].startsWith('Bearer ')' filter" level="DEBUG" doc:name="Debug Logger"/>
-    <message-filter xmlns:mule="http://www.mulesoft.org/schema/mule/core" onUnaccepted="authFormatViolation" doc:name="Does Authorization Header contain Bearer?">
-      <expression-filter xmlns:mule="http://www.mulesoft.org/schema/mule/core" expression="#[message.inboundProperties['Authorization'].startsWith('Bearer ')]" name="AuthorizationHeaderFormatFilter"/>
-    </message-filter>
-    
-    <set-variable variableName="payloadBck" value="#[payload]" doc:name="Save payload"/>
-    <set-payload value="#[message.inboundProperties['Authorization'].substring(message.inboundProperties['Authorization'].indexOf(' ') + 1)]" doc:name="Set JWT as payload"></set-payload>
     <set-variable xmlns:mule="http://www.mulesoft.org/schema/mule/core" variableName="jwtParts" value="#[payload.split('\\.')]" doc:name="Split JWT into three"/>
    
     <logger xmlns:mule="http://www.mulesoft.org/schema/mule/core" message="Policy {{ policyId }} applying 'flowVars['jwtParts'].length == 3' filter" level="DEBUG" doc:name="Debug Logger"/>
